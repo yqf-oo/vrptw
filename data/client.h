@@ -5,10 +5,12 @@
 #include <string>
 
 class Client{
-public:
-	Client() { }
-private:
-	std::string id, id_region;
-	int serv_duration;
-	pair<int, int> time_windows;
-}
+    friend std::iostream& operator>>(std::iostream&, const Client&);
+ public:
+    Client() { }
+ private:
+    std::string id, id_region;
+    int serv_duration;
+    std::pair<int, int> time_windows;
+};
+#endif
