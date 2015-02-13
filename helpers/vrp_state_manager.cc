@@ -1,6 +1,7 @@
 #include <vector>
 #include <utility>
 #include "helpers/vrp_state_manager.h"
+#include <utils/Random.hh>
 
 void VRPStateManager::RandomState(RoutePlan& rp) {
     const std::pair &plan_horizon = in.get_plan_horizon();
@@ -8,22 +9,12 @@ void VRPStateManager::RandomState(RoutePlan& rp) {
     int day, vid;
     std::vector<int> orders;
     assert(plan_horizon.first >= 1);
-    for (int i = 0, j = 0; i < in.get_num_order(); ++i) {
-        while (j < plan_horizon.second) {
-            if (in.OrderVect(i).IsDayFeasible(j)) {
-                orders.push_back(i);
-                for (int k = 0; k < in.get_num_vehicle(); ++k) {
-                    if (in.IsReachable(in.VehicleVect(k), in.OrderVect(i))) {
-                        vid = k;
-                        schduled = true;
-                        break;
-                    }
-                }
-                day = j;
-                break;
-            }
-            ++j;
-        }
+    for (int i = 0; i < in.get_num_order(); ++i) {
+        do {
+            day = Random::Int(0, plan_horizon.second - 1);
+        }while(!in.OrderVect(i).IsDayFeasible(day));
+        do {
+            vid = Random::Int(0, in.get_num_vehicle() - 1);
+        }while(!in.IsReachable(in.VehicleVect(vid), in.OrderVect(i)));
     }
-    if (schduled) 
 }

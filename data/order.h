@@ -8,7 +8,7 @@
 class Order {
     friend std::istream& operator>>(std::istream&, const Order&);
  public:
-    Order() { }
+    Order(): quantity(0), mandatory(0), group(0) { }
     Order(const Order &o):
         id(o.id), id_client(o.id_client), quantity(o.quantity),
         mandatory(o.mandatory), date_window(o.date_window)
@@ -17,21 +17,31 @@ class Order {
           int rd = 1, int dd = 1):
         id(id_o), id_client(id_cli), quantity(q), mandatory(m),
         date_window(rd, dd) { }
+    std::string get_id() const { return id; }
+    std::string get_client() const { return id_client; }
+    bool IsMandatory() const { return mandatory; }
+    bool IsDayFeasible(int day) const {
+        return (day >= date_window.first && day <= date_window.second); }
+    void set_group(int i) { group = i; }
+    int get_group() const { return group; }
+
  protected:
     std::string id, id_client;
     unsigned quantity;
     bool mandatory;
     std::pair<int, int> date_window;
+
+ private:
+    int group;
 };
 
 class OrderGroup : public Order{
  public:
-    OrderGroup() { }
     OrderGroup(const Order &o): Order(o), members(1, o.id) { }
     OrderGroup(const OrderGroup &og): Order(og), members(og.members) { }
     unsigned size() const { return members.size(); }
     void insert(const Order &);
-    bool GroupCompatibility(const Order& o) const {
+    bool IsGroupCompatible(const Order& o) const {
         return ((o.id == id) && (o.quantity == quantity)
                  && (o.date_window == date_window));
     }
