@@ -18,13 +18,16 @@ class ProbInput{
     // ignore VRPPC temporarily
     ProbInput(std::fstream&);
     ~ProbInput();
+    int IndexRegion(const string &region_id) const { return region_id[region_id]; }
     const Client& FindClient(const string&) const;
     const Carrier& FindCarrier(const string &carrier_id) const {
         return carrier_imap[carrier_id];
     }
-    const Billing* FindBillingComponent(const string &billing_id) const {
-        return billing_imap[billing_id];
+    const Billing* FindBilling(const int &vehicle) const {
+        int cr_index = carrier_imap[vehicle_vec(vehicle).get_carrier()];
+        return billing_imap[carrier_vec[cr_index].get_billing()];
     }
+    std::string get_depot() const { return depot_id; }
     unsigned get_num_client() const { return num_client; }
     unsigned get_num_order() const { return num_order; }
     unsigned get_num_og() const { return ordergroup_vec.size(); }
@@ -46,6 +49,9 @@ class ProbInput{
     int get_depart_time() const { 
         return client_vec[client_imap[depot_id]].get_ready_time();
     }
+    int get_return_time() const {
+        return client_vec[client_imap[depot_id]].get_due_time();
+    }
     const std::pair<int, int>& get_plan_horizon() const { return plan_horizon; }
     int get_distance(const string&, const string&) const;
     int get_time_dist(const string&, const string&) const;
@@ -53,9 +59,10 @@ class ProbInput{
 
  private:
     void ReadDataSection(std::fstream&);
+    void CreateBillingStategy(std::fstream&);
     void GroupOrder();
     unsigned get_maxcap_for_order(const Order&);
-    string name, depot_id;
+    std::string name, depot_id;
     unsigned num_client;
     unsigned num_vehicle;
     unsigned num_order;

@@ -1,10 +1,12 @@
+#include "helpers/vrp_state_manager.h"
 #include <utils/Random.hh>
 #include <vector>
 #include <string>
 #include <utility>
 #include <algorithm>
 #include "data/order.h"
-#include "helpers/vrp_state_manager.h"
+#include "data/billing.h"
+#include "helpers/billing_cost_component.h"
 
 void VRPStateManager::RandomState(RoutePlan& rp) {
     ResetState(rp);
@@ -51,7 +53,7 @@ void VRPStateManager::ResetState(RoutePlan &rp) {
 void VRPStateManager::UpdateTimeTable(RoutePlan &rp) {
     timetable.resize(rp.size());
     for (int i = 0; i < rp.size(); ++i) {
-        std::string client_from("c0");
+        std::string client_from(in.get_depot());
         int arrive_time = in.get_depart_time();
         int stop_time = in.get_depart_time();
         int route_size = rp[i].size();
@@ -59,7 +61,7 @@ void VRPStateManager::UpdateTimeTable(RoutePlan &rp) {
         timetable[i].resize(route_size + 1, 0);
 
         for (int j = 0; j <= route_size; ++j) {
-            std::string client_to("c0");
+            std::string client_to(in.get_depot());
             if (j < route_size)
                 client_to = in.OrderVect(rp[i][j]).get_client();
             int ready_time = in.FindClient(client_to).get_ready_time();
@@ -80,11 +82,27 @@ void VRPStateManager::UpdateTimeTable(RoutePlan &rp) {
     }
 }
 
-int VRPStateManager::ComputeDateViolationCost(Const RoutePlan& rp, int weight) {
+unsigned VRPStateManager::CostFunction(const RoutePlan &rp) const {
+    return (Objective() + Violations());
+}
+
+unsigned VRPStateManager::Objective(const RoutePlan &rp) const {
+    unsigned obj = ComputeDateViolationCost() + ComputeTimeViolationCost() +
+              ComputeOptOrderCost() + ComputeTranportationCost();
+    return obj;
+}
+
+unsigned VRPStateManager::Violations(const RoutePlan &rp) const {
+    return ComputeCapExceededCost() + ComputeLateReturnCost();
+}
+
+unsigned
+VRPStateManager::ComputeDateViolationCost(const RoutePlan& rp,
+                                          int weight) const {
     int num_vehicle = in.get_num_vehicle();
-    int day_span = in.get_dayspan(), cost = 0;
+    unsigned day_span = in.get_dayspan(), cost = 0;
     for (int i = 0; i < num_vehicle; ++i) {
-        for (int j = 0; j < day_span; ++j) {
+        for (unsigned j = 0; j < day_span; ++j) {
             int rid = rp(i, j);
             if (rid == -1)
                 continue;
@@ -98,7 +116,9 @@ int VRPStateManager::ComputeDateViolationCost(Const RoutePlan& rp, int weight) {
     return (weight * cost);
 }
 
-int VRPStateManager::ComputeTimeViolationCost(Const RoutePlan& rp, int weight) {
+unsigned
+VRPStateManager::ComputeTimeViolationCost(const RoutePlan &rp,
+                                          int weight) const {
     int cost = 0;
     for (int i = 0; i < rp.size(); ++i) {
         for (int j = 0; j < rp[i].size(); ++j) {
@@ -111,14 +131,54 @@ int VRPStateManager::ComputeTimeViolationCost(Const RoutePlan& rp, int weight) {
     return (weight * cost);
 }
 
-int VRPStateManager::ComputeOptOrderCost(Const RoutePlan &rp, int weight) {
-    int cost = 0;
+unsigned
+VRPStateManager::ComputeOptOrderCost(const RoutePlan &rp, int weight) const {
+    unsigned cost = 0;
     for (int i = 0; i < rp.size(); ++i) {
         if (rp[i].IsExcList()) {
             for (int j = 0; j < rp[i].size(); ++j) {
                 const Order& ord = in.OrderVect(rp[i][j]);
                 if (!ord.IsMandatory())
                     cost += ord.get_demand();
+            }
+        }
+    }
+    return (weight * cost);
+}
+
+unsigned
+VRPStateManager::ComputeTranportationCost(const RoutePlan &rp) const {
+    unsigned cost = 0;
+    for (unsigned i = 0; i < rp.size(); ++i) {
+        if (!rp[i].IsExcList) {
+            Billing *cr = in.FindBilling(rp[i].get_vehicle());
+            cost += cr->GetCostComponent().Cost(rp[i]);
+        }
+    }
+    return cost;
+}
+
+unsigned ComputeCapExceededCost(const RoutePlan &rp, int weight) const {
+    unsigned cost = 0;
+    for (unsigned i = 0; i < rp.size(); ++i) {
+        if (rp[i].IsExcList())
+            continue;
+        unsigned vehicle_cap = in.VehicleVect(rp[i].get_vehicle).get_cap();
+        unsigned route_demand = rp[i].demand(in);
+        if (route_demand > vehicle_cap)
+            cost += route_demand - vehicle_cap;
+    }
+    return (weight * cost);
+}
+
+unsigned ComputeLateReturnCost(const RoutePlan &rp, int weight) const {
+    unsigned cost = 0;
+    unsigned shutdown_time = in.get_return_time() + 3600;  // plus 1 hour
+    for (unsigned i = 0; i < rp.size(); ++i) {
+        if (!rp[i].IsExcList()) {
+            for (unsigned j = 0; j <= rp[i].size(); ++j) {
+                if (rp.get_est(i, j) > shutdown_time)
+                    ++cost;
             }
         }
     }

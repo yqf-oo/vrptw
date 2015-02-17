@@ -11,7 +11,8 @@ class Route {
     Route(std::vector<int> ov):
         day(0), vehicle(0), exc_list(true), orders(ov) { }
     int size() const { return orders.size(); }
-    int length(cost ProbInput&) const;
+    unsigned length(const ProbInput&) const;
+    unsigned demand(const ProbInput&) const;
     unsigned get_day() const { return day; }
     unsigned get_vehicle() const { return vehicle; }
     bool IsExcList() const { return exc_list; }

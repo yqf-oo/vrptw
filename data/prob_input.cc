@@ -1,10 +1,14 @@
+#include "data/prob_input.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
+#include <utility>
 #include <cassert>
-#include "data/prob_input.h"
+#include <cmath>
+#include "data/billing.h"
+#include "helpers/billing_cost_component.h"
 
 const int kBufSize = 200;
 
@@ -53,7 +57,11 @@ ProbInput::ProbInput(std::fstream &input) {
 }
 
 ProbInput::~ProbInput() {
-
+    std::map<std::string, Billing*>::iterator map_it = billing_imap.cbegin();
+    while (map_it != billing_imap.cend()) {
+        delete map_it->second;
+        ++map_it;
+    }
 }
 
 void ProbInput::ReadDataSection(std::fstream &input) {
@@ -69,6 +77,7 @@ void ProbInput::ReadDataSection(std::fstream &input) {
     }
 
     // BILLINGS
+    CreateBillingStategy();
 
     string id1, id2;
     // CARRIERS
@@ -125,8 +134,61 @@ void ProbInput::ReadDataSection(std::fstream &input) {
         ind2 = client_imap[id2];
 
         assert(ind1 < num_client && ind2 < num_client);
-        distance[ind1][ind2] = dist_km * 1000;  // to metres
+        distance[ind1][ind2] = static_cast<unsigned>(dist_km + 0.5);
         time_dist[ind1][ind2] = dist_sec;
+    }
+}
+
+void ProbInput::CreateBillingStategy(std::fstream &input) {
+    int weight = 100;
+    DistanceBillingCostComponent dcc =
+        new DistanceBillingCostComponent(*this, weight);
+    DistanceLoadBillingCostComponent dlcc =
+        new DistanceBillingCostComponent(*this, weight);
+    LoadRangeBillingCostComponent lrcc =
+        new LoadRangeBillingCostComponent(*this, weight);
+    LoadFarestClientCostComponent lfcc =
+        new LoadFarestClientCostComponent(*this, weight);
+    LoadClientDependentCostComponent lcc =
+        new LoadClientDependentCostComponent(*this, weight);
+
+    double n;
+    string tmp, id, type;
+    char buffer[kBufSize];
+    input >> tmp;
+    for(int i = 0; i < num_billing; ++i) {
+        input >> id >> type;
+        input.getline(buffer, kBufSize);
+        if (type == "bt1") {
+            input >> n;
+            unsigned rate = static_cast<unsigned>(ceil(n*1000));
+            KmBilling *kmc = new KmBilling(id, type, rate);
+            kmc->SetCostComponent(dcc);
+            billing_imap[id] = kmc;
+        } else if (type == "bt2") {
+            LoadKmBilling *lkc = new LoadKmBilling(id, type);
+            lkc->ReadInputData(input, num_region);
+            lkc->SetCostComponent(dlcc);
+            billing_imap[id] = lkc;
+        } else if (type == "bt3") {
+            VarLoadBilling *vlc = new VarLoadBilling(id, type);
+            vlc->ReadInputData(input, num_region);
+            lkc->SetCostComponent(lrcc);
+            billing_imap[id] = vlc;
+        } else if (type == "bt4") {
+            LoadBilling *lfc = new LoadBilling(id, type);
+            lfc->ReadInputData(input, num_region);
+            lfc->SetCostComponent(lfcc);
+            billing_imap[id] = lfc;
+        } else if (type == "bt5") {
+            LoadBilling *ldc = new LoadBilling(id, type);
+            ldc->ReadInputData(input, num_region);
+            ldc->SetCostComponent(lcc);
+            billing_imap[id] = ldc;
+        } else {
+            cout << "Billing type not implemented" <<endl;
+            assert(false);
+        }
     }
 }
 

@@ -2,6 +2,7 @@
 #define _BILLING_COST_COMPONENT_H_
 #include <iostream>
 #include <string>
+#include <utility>
 #include "data/prob_input.h"
 #include "data/route.h"
 
@@ -11,7 +12,7 @@ class BillingCostComponent {
         in(i), weight(w), name(n) { }
     virtual int ComputeCost(const Route &r) const = 0;
     int Cost(const Route &r) const {
-        return weight * ComputeCost(r, index_route);
+        return weight * ComputeCost(r);
     }
     string Name() const { return name; }
     virtual void PrintViolations(const Route &r, unsigned route_index,
@@ -20,6 +21,7 @@ class BillingCostComponent {
     int Weight() const { return weight; }
     virtual ~BillingCostComponent() {}
  protected:
+    std::pair<unsigned, unsigned> MaxRateLoad(const Route&);
     const ProbInput &in;
     const string name;
     int weight;
@@ -37,20 +39,8 @@ class LoadFarestClientCostComponent: public BillingCostComponent {
  public:
     LoadFarestClientCostComponent(const ProbInput &in, int weight):
         BillingCostComponent(in, weight, "LoadFarestClientCostComponent")
-    pair<unsigned, unsigned> MaxRateLoad(const Route &r) const;
+    // pair<unsigned, unsigned> MaxRateLoad(const Route &r) const;
     int  ComputeCost(const Route &r) const;
-};
-
-
-// DistanceLoadBillingCostComponent
-// This class compute the cost dependent on the load and on the distance.
-class DistanceLoadBillingCostComponent: public BillingCostComponent {
- public:
-    DistanceLoadBillingCostComponent(const ProbInput &in,  int weight):
-        BillingCostComponent(in, weight, "DistanceLoadBillingCostComponent") {}
-    pair<unsigned, unsigned> MaxRateLoad(const Route &r) const;
-    bool IsFull(const Route &r) const;
-    int ComputeCost(const Route &r) const;
 };
 
 // LoadRangeBillingCostComponent
@@ -59,11 +49,23 @@ class LoadRangeBillingCostComponent: public BillingCostComponent {
  public:
     LoadRangeBillingCostComponent(const ProbInput &in, int weight):
         BillingCostComponent(in, weight, "LoadRangeBillingCostComponent") {}
+    int  ComputeCost(const Route &r) const;
+ private:
     unsigned FindRange(const Route &r, unsigned load) const;
     unsigned MaxRate(const Route &r, unsigned range) const;
-    int  ComputeCost(const Route &r) const;
 };
 
+// DistanceLoadBillingCostComponent
+// This class compute the cost dependent on the load and on the distance.
+class DistanceLoadBillingCostComponent: public BillingCostComponent {
+ public:
+    DistanceLoadBillingCostComponent(const ProbInput &in,  int weight):
+        BillingCostComponent(in, weight, "DistanceLoadBillingCostComponent") {}
+    // pair<unsigned, unsigned> MaxRateLoad(const Route &r) const;
+    int ComputeCost(const Route &r) const;
+ private:
+    bool IsFull(const Route &r) const;
+};
 
 // LoadClientDependetBillingCostComponent
 // This class compute the cost dependent on the load

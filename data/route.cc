@@ -18,14 +18,22 @@ void RoutePlan::Allocate() {
     plan.resize(in.get_num_vehicle(), std::vector<int>(-1, day_span));
 }
 
-int Route::length(const ProbInput& in) {
+unsigned Route::length(const ProbInput& in) const {
     int len = 0;
-    std::string client_from("c0");
+    std::string client_from(in.get_depot());
     for (int i = 0; i < orders.size(); ++i) {
         std::string client_to = in.OrderVect(orders[i]).get_client();
         len += in.get_distance(client_from, client_to);
         client_from = client_to;
     }
-    len += in.get_distance(client_from, "c0");
+    len += in.get_distance(client_from, in.get_depot());
     return len;
+}
+
+unsigned Route::demand(const ProbInput& in) const {
+    int demand = 0;
+    for (int i = 0; i < orders.size(); ++i) {
+        demand += in.OrderVect(orders[i]).get_demand();
+    }
+    return demand;
 }
