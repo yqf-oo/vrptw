@@ -12,12 +12,16 @@ class VRPStateManager: public StateManager<ProbInput, RoutePlan> {
         StateManager<ProbInput, RoutePlan>(pi, "VRPStateManager") { }
     ~VRPStateManager() { ClearCostComponent(); }
     void RandomState(RoutePlan&);
-    bool CheckConsistency(const RoutePlan&) const;
+    bool CheckConsistency(const RoutePlan&) const { return true; }
     unsigned CostFunction(const RoutePlan&) const;
     unsigned Objective(const RoutePlan&) const;
     unsigned Violations(const RoutePlan&) const;
  private:
     void ResetState(RoutePlan&);
+    void UpdateTimeTable(RoutePlan&);
+    int ComputeDateViolationCost(const RoutePlan&, int);
+    int ComputeTimeViolationCost(const RoutePlan&, int);
+    int ComputeOptOrderCost(const RoutePlan&, int);
 };
 
 #endif

@@ -19,6 +19,7 @@ class Order {
         date_window(rd, dd) { }
     std::string get_id() const { return id; }
     std::string get_client() const { return id_client; }
+    unsigned get_demand() const { return quantity; }
     bool IsMandatory() const { return mandatory; }
     bool IsDayFeasible(int day) const {
         return (day >= date_window.first && day <= date_window.second); }

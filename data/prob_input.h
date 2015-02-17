@@ -40,6 +40,12 @@ class ProbInput{
         assert(i < num_vehicle);
         return vehicle_vec(i);
     }
+    int get_dayspan() const { 
+        return plan_horizon.second - plan_horizon.fisrt + 1;
+    }
+    int get_depart_time() const { 
+        return client_vec[client_imap[depot_id]].get_ready_time();
+    }
     const std::pair<int, int>& get_plan_horizon() const { return plan_horizon; }
     int get_distance(const string&, const string&) const;
     int get_time_dist(const string&, const string&) const;

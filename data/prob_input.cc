@@ -80,7 +80,7 @@ void ProbInput::ReadDataSection(std::fstream &input) {
         string region_id;
         for (int j = 0; j < num_incompatible_regions; ++j){
             intput >> region_id;
-            int region_ind = region_ind[region_id];
+            int region_ind = region_imap[region_id];
             assert(region_ind < num_region);
             site_map[i][region_ind] = false;
         }
