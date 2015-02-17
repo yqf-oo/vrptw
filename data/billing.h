@@ -4,15 +4,28 @@
 #include <string>
 #include <vector>
 
+class BillingCostComponent;
+
 class Billing {
  public:
     Billing(std::string i, std::string t):
         id(i), type(t) { }
     virtual ~Billing() { }
+    void AddCostComponent(BillingCostComponent* cc) {
+        cost_component.push_back(cc);
+    }
+    void ClearCostComponents() {
+        cost_component.clear();
+    }
+    BillingCostComponent& GetCostComponent(unsigned i) const {
+        return *(cost_component[i]);
+    }
+    size_t CostComponents() const { return cost_component.size(); }
     std::string get_id() const { return id; }
     std::string get_type() const { return type; }
  protected:
     std::string id, type;
+    std::vector<BillingCostComponent*> cost_component;
 };
 
 // KM BILLING (cost function 1)
