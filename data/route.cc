@@ -6,7 +6,7 @@
 void RoutePlan::AddOrder(int order_index, unsigned day, unsigned vid) {
     int &rid = plan[vid][day];
     if (rid != -1) {
-        routes[rid].AddOrder(order_index);
+        routes[rid].push_back(order_index);
     } else {
         routes.push_back(Route(order_index, day, vid, false));
         rid = routes.size() - 1;

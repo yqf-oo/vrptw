@@ -6,6 +6,7 @@
 #include <string>
 #include <map>
 #include <utility>
+#include <cassert>
 #include "data/carrier.h"
 #include "data/vehicle.h"
 #include "data/client.h"

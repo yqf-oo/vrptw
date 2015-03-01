@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <map>
 #include <vector>
 #include <utility>
 #include <cassert>
@@ -57,7 +58,8 @@ ProbInput::ProbInput(std::fstream &input) {
 }
 
 ProbInput::~ProbInput() {
-    std::map<std::string, Billing*>::iterator map_it = billing_imap.cbegin();
+    std::map<std::string, Billing*>::iterator map_it;
+    map_it = billing_imap.cbegin();
     while (map_it != billing_imap.cend()) {
         delete map_it->second;
         ++map_it;
@@ -87,7 +89,7 @@ void ProbInput::ReadDataSection(std::fstream &input) {
         int num_incompatible_regions;
         input >> id1 >> id2 >> num_incompatible_regions;
         string region_id;
-        for (int j = 0; j < num_incompatible_regions; ++j){
+        for (int j = 0; j < num_incompatible_regions; ++j) {
             intput >> region_id;
             int region_ind = region_imap[region_id];
             assert(region_ind < num_region);
@@ -156,7 +158,7 @@ void ProbInput::CreateBillingStategy(std::fstream &input) {
     string tmp, id, type;
     char buffer[kBufSize];
     input >> tmp;
-    for(int i = 0; i < num_billing; ++i) {
+    for (int i = 0; i < num_billing; ++i) {
         input >> id >> type;
         input.getline(buffer, kBufSize);
         if (type == "bt1") {
@@ -195,7 +197,7 @@ void ProbInput::CreateBillingStategy(std::fstream &input) {
 void ProbInput::GroupOrder() {
     OrderGroup og(order_vec[0]);
     ordergroup_vec.push_back(og);
-    for (int i = 1; i < num_order; i++){
+    for (int i = 1; i < num_order; i++) {
         int og_size = ordergroup_vec.size();
         for (int j = 0; j < og_size; ++j) {
             if (ordergroup_vec[j].IsGroupCompatible(order_vec[i])) {
