@@ -1,3 +1,5 @@
+#ifndef _VRP_NEIGHBORHOOD_EXPLORER_H_
+#define _VRP_NEIGHBORHOOD_EXPLORER_H_
 #include <helpers/NeighborhoodExplorer.hh>
 #include <vector>
 #include <string>
@@ -20,7 +22,7 @@ public NeighborhoodExplorer<ProbInput, RoutePlan, Move> {
     TabuNeighborhoodExplorer(const ProbInput& in,
                              VRPStateManager& sm, string nm):
         NeighborhoodExplorer<ProbInput, RoutePlan, Move>(in, sm, nm) { }
-    const std::vector<int> UpdateRouteTimetable(std::vector<int>&, const Route&);
+    void UpdateRouteTimetable(std::vector<int>&, const Route&);
     int ComputeRouteTimeViolation(const RoutePlan&,
                                   int, unsigned, unsigned);
     std::vector<Route> routes;
@@ -136,7 +138,8 @@ public TabuNeighborhoodExplorer<IntraSwap> {
 
 template <class Move>
 void
-TabuNeighborhoodExplorer<Move>::UpdateRouteTimetable(std::vector<int> &ret, const Route &r) {
+TabuNeighborhoodExplorer<Move>::UpdateRouteTimetable(std::vector<int> &ret,
+                                                     const Route &r) {
     int arrive_time = in.get_depart_time();
     int stop_time = in.get_depart_time();
     unsigned route_size = r.size();
@@ -183,3 +186,5 @@ TabuNeighborhoodExplorer<Move>::ComputeRouteTimeViolation(const RoutePlan &rp,
     }
     return delta;
 }
+
+#endif
