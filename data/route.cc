@@ -2,6 +2,33 @@
 #include <string>
 #include <utility>
 #include "data/route.h"
+#include "data/prob_input.h"
+
+std::ostream& operator<<(std::ostream &os, const RoutePlan &rp) {
+    for (int i = 1; i <= in.get_dayspan(); ++i) {
+        os << "Day " << i <<" :" << endl;
+        for (int j = 0; j < in.get_num_vehicle(); ++j) {
+            int rid = plan[j][i - 1];
+            if (rid != -1 &&) {
+                std::string vehicle = in.VehicleVect(j).get_id();
+                unsigned veh_cap = in.VehicleVect(j).get_cap();
+                os << "# " << rid << vehicle << "(" << veh_cap << ")"
+                   << rp[rid].size() << ":";
+                for (int k = 0; k < rp[rid].size(); ++k)
+                    os << " " << in.OrderVect(rp[rid][k]).get_id();
+                os << " [" << rp[rid].demand() << "]" << endl;
+            }
+        }
+    }
+    os << endl;
+    assert(rp.size() > 1);
+    unsigned unscheduled = rp.size() - 1;
+    os << "Unscheduled " << rp[unscheduled].size() << ":";
+    for (int i = 0; i < rp[unscheduled].size(); ++i)
+        os << " " << in.OrderVect(rp[unscheduled][i]).get_id();
+    os << " [" << rp[unscheduled].demand() << "]" << endl;
+    return os;
+}
 
 void RoutePlan::AddOrder(int order_index, unsigned day, unsigned vid) {
     int &rid = plan[vid][day];

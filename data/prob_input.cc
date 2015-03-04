@@ -8,7 +8,6 @@
 #include <utility>
 #include <cassert>
 #include <cmath>
-#include "data/billing.h"
 #include "helpers/billing_cost_component.h"
 
 const int kBufSize = 200;

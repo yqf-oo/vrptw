@@ -8,13 +8,13 @@
 
 class BillingCostComponent {
  public:
-    BillingCostComponent(const ProbInput &i, int w, string n):
+    BillingCostComponent(const ProbInput &i, int w, std::string n):
         in(i), weight(w), name(n) { }
     virtual int ComputeCost(const Route &r) const = 0;
     int Cost(const Route &r) const {
         return weight * ComputeCost(r);
     }
-    string Name() const { return name; }
+    std::string Name() const { return name; }
     virtual void PrintViolations(const Route &r, unsigned route_index,
                                  std::ostream &os = std::cout);
     void SetWeight(const unsigned w) { weight = w; }
@@ -23,8 +23,8 @@ class BillingCostComponent {
  protected:
     std::pair<unsigned, unsigned> MaxRateLoad(const Route&);
     const ProbInput &in;
-    const string name;
     int weight;
+    const std::string name;
 };
 
 class DistanceBillingCostComponent: public BillingCostComponent {
@@ -38,7 +38,7 @@ class DistanceBillingCostComponent: public BillingCostComponent {
 class LoadFarestClientCostComponent: public BillingCostComponent {
  public:
     LoadFarestClientCostComponent(const ProbInput &in, int weight):
-        BillingCostComponent(in, weight, "LoadFarestClientCostComponent")
+        BillingCostComponent(in, weight, "LoadFarestClientCostComponent") {}
     // pair<unsigned, unsigned> MaxRateLoad(const Route &r) const;
     int  ComputeCost(const Route &r) const;
 };

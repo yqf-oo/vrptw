@@ -4,8 +4,9 @@
 #include <string>
 #include <vector>
 #include <cassert>
+#include "helpers/billing_cost_component.h"
 
-class BillingCostComponent;
+// class BillingCostComponent;
 
 class Billing {
  public:
@@ -49,7 +50,7 @@ class LoadKmBilling: public Billing {
         assert(r_index < load_cost.size());
         return load_cost[r_index];
     }
-    void ReadInputData(istream&, unsigned);
+    void ReadInputData(std::istream&, unsigned);
  private:
     unsigned km_rate;
     unsigned full_load_value;
@@ -63,14 +64,14 @@ class VarLoadBilling: public Billing {
         Billing(i, t) { }
     ~VarLoadBilling() { delete cost_component; }
     unsigned get_load_cost(unsigned r_index, unsigned range) {
-        assert(range < num_range && r_index < load_cost.size());
+        assert(r_index < load_cost.size());
         return load_cost[r_index][range];
     }
     unsigned operator[] (unsigned i) const { return levels[i]; }
     unsigned& operator[] (unsigned i ) { return levels[i]; }
-    void ReadInputData(istream&, unsigned);
+    void ReadInputData(std::istream&, unsigned);
  private:
-    std::vector<std::vector<unsigned>> load_cost;
+    std::vector<std::vector<unsigned> > load_cost;
     std::vector<unsigned> levels;
 };
 
@@ -80,7 +81,7 @@ class LoadBilling: public Billing {
     LoadBilling(std::string i, std::string t):
         Billing(i, t) { }
     ~LoadBilling() { delete cost_component; }
-    void ReadInputData(istream&, unsigned);
+    void ReadInputData(std::istream&, unsigned);
     unsigned get_load_cost(unsigned r_index) const {
         assert(r_index < load_cost.size());
         return load_cost[r_index];

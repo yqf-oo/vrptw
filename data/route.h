@@ -2,7 +2,8 @@
 #define _ROUTE_H
 #include <iostream>
 #include <vector>
-#include "data/prob_input.h"
+
+class ProbInput;
 
 class Route {
  public:
@@ -19,9 +20,9 @@ class Route {
     unsigned get_vehicle() const { return vehicle; }
     bool IsExcList() const { return exc_list; }
     void push_back(int order_index) { orders.push_back(order_index); }
-    void erase(unsigned pos) { orders.erase(orders.cbegin() + pos); }
+    void erase(unsigned pos) { orders.erase(orders.begin() + pos); }
     void insert(unsigned pos, int order) {
-        orders.insert(orders.cbegin() + pos, order);
+        orders.insert(orders.begin() + pos, order);
     }
     const int& operator[] (int i) const { return orders[i]; }
     int& operator[] (int i) { return orders[i]; }
@@ -38,17 +39,18 @@ class Route {
 };
 
 class RoutePlan {
+    friend std::ostream& operator<<(std::ostream&, const RoutePlan&);
+
  public:
     RoutePlan(const ProbInput& pi): in(pi) { Allocate(); }
-    RoutePlan(const RoutePlan &rp): 
-        in(rp.pi), routes(rp.routes), plan(rp.plan) { }
+    RoutePlan(const RoutePlan &rp):
+        in(rp.in), routes(rp.routes), plan(rp.plan) { }
     void AddOrder(int , unsigned, unsigned, bool);
     void AddRoute(const Route &r) { routes.push_back(r); }
     int size() const { return routes.size(); }
-    // int get_est(int route, int order) const { return timetable[route][order]; }
     // int& get_est(int route, int order) { return timetable[route][order]; }
     const Route& operator[] (int i) const { return routes[i]; }
-    Route& operator[] (int i) const { return routes[i]; }
+    Route& operator[] (int i) { return routes[i]; }
     const int& operator() (int veh, int day) const { return plan[veh][day]; }
     int& operator() (int veh, int day) { return plan[veh][day]; }
     RoutePlan& operator=(const RoutePlan &rp) {
@@ -58,10 +60,11 @@ class RoutePlan {
     }
     // check whether a route plan is feasible
     bool CheckFeasibility();
+
  private:
     void Allocate();
-    ProbInput &in;
+    const ProbInput &in;
     std::vector<Route> routes;
-    std::vector<std::vector<int>> plan;
+    std::vector<std::vector<int> > plan;
 };
 #endif

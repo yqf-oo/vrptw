@@ -6,7 +6,7 @@
 
 const int kBufSize = 200;
 
-void LoadKmBilling::ReadInputData(istream &is, unsigned num_region) {
+void LoadKmBilling::ReadInputData(std::istream &is, unsigned num_region) {
     char buffer[kBufSize];
     double n;
 
@@ -28,7 +28,7 @@ void LoadKmBilling::ReadInputData(istream &is, unsigned num_region) {
   is.getline(buffer, kBufSize);
 }
 
-void VarLoadBilling::ReadInputData(istream &is, unsigned num_region) {
+void VarLoadBilling::ReadInputData(std::istream &is, unsigned num_region) {
     char buffer[kBufSize];
     double n;
     unsigned num_range;
@@ -55,7 +55,7 @@ void VarLoadBilling::ReadInputData(istream &is, unsigned num_region) {
     is.getline(buffer, kBufSize);
 }
 
-void LoadBilling::ReadInputData(istream &is, unsigned num_region) {
+void LoadBilling::ReadInputData(std::istream &is, unsigned num_region) {
     char buffer[kBufSize];
     double n;
 
