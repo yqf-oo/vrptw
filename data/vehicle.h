@@ -11,7 +11,7 @@ class Vehicle {
     // std::string get_id() const {return id; }
     // std::string get_carrier() const { return id_carrier; }
     std::string get_id() const { return id; }
-    unsigned get_cap const { return capacity; }
+    unsigned get_cap() const { return capacity; }
     std::string get_carrier() const { return id_carrier; }
  private:
     std::string id, id_carrier;
