@@ -4,7 +4,7 @@
 #include <string>
 
 class Vehicle {
-    friend std::istream& operator>>(std::istream&, const Vehicle&);
+    friend std::istream& operator>>(std::istream&, Vehicle&);
  public:
     // unsigned get_capacity() const { return capacity; }
     // unsigned get_fixed_cost() const { return fixed_cost; }

@@ -17,7 +17,7 @@ void InsMoveNeighborhoodExplorer::RandomMove(const RoutePlan &rp,
 bool InsMoveNeighborhoodExplorer::FeasibleMove(const RoutePlan &rp,
                                                const InsMove &mv) const {
     if (rp[mv.new_route].IsExcList())
-        if (in.OrderVect(mv.order).IsMandtory())
+        if (in.OrderVect(mv.order).IsMandatory())
             return false;
     if (mv.new_route == mv.old_route)
         return false;
@@ -40,7 +40,7 @@ void InsMoveNeighborhoodExplorer::FirstMove(const RoutePlan &rp,
     assert(rp.size() > 1);
     mv.old_route = 0;
     mv.old_pos = 0;
-    mv.order = rp[mv.old_route][old_pos];
+    mv.order = rp[mv.old_route][mv.old_pos];
     mv.new_route = 1;
     mv.new_pos = 0;
 }
@@ -83,8 +83,8 @@ InsMoveNeighborhoodExplorer::MakeMove(RoutePlan &rp,
     rp[mv.old_route].erase(mv.old_pos);
     rp[mv.new_route].insert(mv.new_pos, mv.order);
     // update timetable
-    UpdateRouteTimetable(sm[mv.old_route], rp, rp[mv.old_route]);
-    UpdateRouteTimetable(sm[mv.new_route], rp, rp[mv.new_route]);
+    UpdateRouteTimetable(rp.routetime(mv.old_route), rp[mv.old_route]);
+    UpdateRouteTimetable(rp.routetime(mv.new_route), rp[mv.new_route]);
 }
 
 int
@@ -97,9 +97,9 @@ InsMoveNeighborhoodExplorer::DeltaCostFunction(const RoutePlan &rp,
     routes[1].insert(mv.new_pos, mv.order);
     timetable.resize(2);
     if (!routes[0].IsExcList())
-        UpdateRouteTimetable(timetable[0], rp, rp[mv.old_route]);
+        UpdateRouteTimetable(timetable[0], rp[mv.old_route]);
     if (!routes[1].IsExcList())
-        UpdateRouteTimetable(timetable[1], rp, rp[mv.new_route]);
+        UpdateRouteTimetable(timetable[1], rp[mv.new_route]);
 
     return DeltaObjective(rp, mv) + DeltaViolations(rp, mv);
 }
@@ -133,12 +133,12 @@ InsMoveNeighborhoodExplorer::DeltaDateViolationCost(const RoutePlan &rp,
 int
 InsMoveNeighborhoodExplorer::DeltaTimeViolationCost(const RoutePlan &rp,
                                         const InsMove &mv, int weight) const {
-    int isnew = 0, delta = 0;
+    int delta = 0;
     if (!rp[mv.old_route].IsExcList())
-        delta += ComputeRouteTimeViolation(mv.old_route, unsigned mv.old_pos);
+        delta += ComputeRouteTimeViolation(rp, 0, mv.old_route, mv.old_pos);
 
     if (!rp[mv.new_route].IsExcList())
-        delta += ComputeRouteTimeViolation(mv.new_route, mv.new_pos);
+        delta += ComputeRouteTimeViolation(rp, 1, mv.new_route, mv.new_pos);
 
     return delta;
 }
@@ -150,7 +150,7 @@ InsMoveNeighborhoodExplorer::DeltaTimeViolationCost(const RoutePlan &rp,
 //     for (int i = pos; i < rp[route].size(); ++i) {
 //         client = in.OrderVect(rp[route][i]).get_client();
 //         int duetime = in.FindClient(client).get_due_time();
-//         int arrive_time = sm(route, i);
+//         int arrive_time = rp(route, i);
 //         if (arrive_time > duetime)
 //             delta -= arrive_time - duetime;
 //     }
@@ -224,11 +224,11 @@ int
 InsMoveNeighborhoodExplorer::DeltaLateReturnCost(const RoutePlan &rp,
                                         const InsMove &mv, int weight) const {
     int delta = 0;
-    unsigned shutdown_time = in.get_return_time() + 3600;  // plus 1 hour
-    if (sm(mv.old_route, mv.old_pos) > shutdown_time)
+    int shutdown_time = in.get_return_time() + 3600;  // plus 1 hour
+    if (rp(mv.old_route, mv.old_pos) > shutdown_time)
         --delta;
     for (unsigned j = mv.old_pos; j < routes[0].size(); ++j) {
-        if (sm(mv.old_route, j + 1) > shutdown_time)
+        if (rp(mv.old_route, j + 1) > shutdown_time)
             --delta;
         if (timetable[0][j] > shutdown_time)
             ++delta;
@@ -236,7 +236,7 @@ InsMoveNeighborhoodExplorer::DeltaLateReturnCost(const RoutePlan &rp,
     if (timetable[1][mv.new_pos] > shutdown_time)
         ++delta;
     for (unsigned j = mv.new_pos; j < rp[mv.new_route].size(); ++j) {
-        if (sm(mv.new_route, j) > shutdown_time)
+        if (rp(mv.new_route, j) > shutdown_time)
             --delta;
         if (timetable[1][j + 1] > shutdown_time)
             ++delta;
@@ -256,9 +256,9 @@ void InterSwapNeighborhoodExplorer::RandomMove(const RoutePlan &rp,
 
 bool InterSwapNeighborhoodExplorer::FeasibleMove(const RoutePlan &rp,
                                                const InterSwap &mv) const {
-    if (rp[mv.route1].IsExcList() && in.OrderVect(mv.ord2).IsMandtory())
+    if (rp[mv.route1].IsExcList() && in.OrderVect(mv.ord2).IsMandatory())
         return false;
-    else if (rp[mv.route2].IsExcList() && in.OrderVect(mv.ord1).IsMandtory())
+    else if (rp[mv.route2].IsExcList() && in.OrderVect(mv.ord1).IsMandatory())
         return false;
     if (mv.route1 == mv.route2)
         return false;
@@ -326,10 +326,10 @@ bool InterSwapNeighborhoodExplorer::AnyNextMove(const RoutePlan &rp,
 void
 InterSwapNeighborhoodExplorer::MakeMove(RoutePlan &rp,
                                       const InterSwap &mv) const {
-    std::swap(rp[mv.route1][pos1], rp[mv.route2][pos2]);
+    std::swap(rp[mv.route1][mv.pos1], rp[mv.route2][mv.pos2]);
     // update timetable
-    UpdateRouteTimetable(sm[mv.route1], rp, rp[mv.route1]);
-    UpdateRouteTimetable(sm[mv.route2], rp, rp[mv.route2]);
+    UpdateRouteTimetable(rp.routetime(mv.route1), rp[mv.route1]);
+    UpdateRouteTimetable(rp.routetime(mv.route2), rp[mv.route2]);
 }
 
 int
@@ -338,12 +338,12 @@ InterSwapNeighborhoodExplorer::DeltaCostFunction(const RoutePlan &rp,
     // ugly reduntant data
     routes.push_back(rp[mv.route1]);
     routes.push_back(rp[mv.route2]);
-    std::swap(routes[0][pos1], routes[1][pos2]);
+    std::swap(routes[0][mv.pos1], routes[1][mv.pos2]);
     timetable.resize(2);
     if (!routes[0].IsExcList())
-        UpdateRouteTimetable(timetable[0], rp, mv.route1);
+        UpdateRouteTimetable(timetable[0], rp[mv.route1]);
     if (!routes[1].IsExcList())
-        UpdateRouteTimetable(timetable[1], rp, mv.route2);
+        UpdateRouteTimetable(timetable[1], rp[mv.route2]);
 
     return DeltaObjective(rp, mv) + DeltaViolations(rp, mv);
 }
@@ -371,7 +371,8 @@ InterSwapNeighborhoodExplorer::DeltaDateViolationCost(const RoutePlan &rp,
     unsigned old_day = rp[mv.route1].get_day();
     unsigned new_day = rp[mv.route2].get_day();
     unsigned d1 = ord1.get_demand(), d2 = ord2.get_demand();
-    int delta = (d1-d2) * (o.IsDayFeasible(old_day) - o.IsDayFeasible(new_day));
+    int delta = d1 * (ord1.IsDayFeasible(old_day) - ord1.IsDayFeasible(new_day)) +
+                d2 * (ord2.IsDayFeasible(new_day) - ord2.IsDayFeasible(old_day));
     return (weight * delta);
 }
 
@@ -379,11 +380,12 @@ int
 InterSwapNeighborhoodExplorer::DeltaTimeViolationCost(const RoutePlan &rp,
                                         const InterSwap &mv, int weight) const {
     int isnew = 0, delta = 0;
-    if (!rp[mv.old_route].IsExcList())
+    if (!rp[mv.route1].IsExcList()) {
         delta += ComputeRouteTimeViolation(rp, isnew, mv.route1, mv.pos1);
+    }
 
     isnew = 1;
-    if (!rp[mv.new_route].IsExcList())
+    if (!rp[mv.route2].IsExcList())
         delta += ComputeRouteTimeViolation(rp, isnew, mv.route2, mv.pos2);
 
     return delta;
@@ -395,13 +397,13 @@ InterSwapNeighborhoodExplorer::DeltaOptOrderCost(const RoutePlan &rp,
     int delta = 0;
     const Order& ord1 = in.OrderVect(mv.ord1);
     const Order& ord2 = in.OrderVect(mv.ord2);
-    if (!ord1.IsMandtory()) {
+    if (!ord1.IsMandatory()) {
         if (rp[mv.route1].IsExcList())
             delta -= ord1.get_demand();
         else if (rp[mv.route2].IsExcList())
             delta += ord1.get_demand();
     }
-    if (!ord2.IsMandtory()) {
+    if (!ord2.IsMandatory()) {
         if (rp[mv.route2].IsExcList())
             delta -= ord2.get_demand();
         else if (rp[mv.route1].IsExcList())
@@ -444,7 +446,7 @@ InterSwapNeighborhoodExplorer::DeltaCapExceededCost(const RoutePlan &rp,
             delta += route_demand + demand_to - demand_from - vehicle_cap;
         }
     }
-    if (!rp[mv.route2].IsExcList() {
+    if (!rp[mv.route2].IsExcList()) {
         vehicle_cap = in.VehicleVect(rp[mv.route2].get_vehicle()).get_cap();
         route_demand = rp[mv.route2].demand(in);
         if (route_demand > vehicle_cap) {
@@ -463,17 +465,17 @@ int
 InterSwapNeighborhoodExplorer::DeltaLateReturnCost(const RoutePlan &rp,
                                         const InterSwap &mv, int weight) const {
     int delta = 0;
-    unsigned shutdown_time = in.get_return_time() + 3600;  // plus 1 hour
+    int shutdown_time = in.get_return_time() + 3600;  // plus 1 hour
 
     for (unsigned j = mv.pos1; j < rp[mv.route1].size(); ++j) {
-        if (sm(mv.route1, j) > shutdown_time)
+        if (rp(mv.route1, j) > shutdown_time)
             --delta;
         if (timetable[0][j] > shutdown_time)
             ++delta;
     }
 
     for (unsigned j = mv.pos2; j < rp[mv.route2].size(); ++j) {
-        if (sm(mv.route2, j) > shutdown_time)
+        if (rp(mv.route2, j) > shutdown_time)
             --delta;
         if (timetable[1][j] > shutdown_time)
             ++delta;
@@ -506,7 +508,7 @@ bool IntraSwapNeighborhoodExplorer::FeasibleMove(const RoutePlan &rp,
 void IntraSwapNeighborhoodExplorer::AnyRandomMove(const RoutePlan &rp,
                                                 IntraSwap &mv) const {
     mv.route = Random::Int(0, rp.size() - 1);
-    assert(rp[mv.route1].size() > 1);
+    assert(rp[mv.route].size() > 1);
     mv.pos1 = Random::Int(0, rp[mv.route].size() - 1);
     mv.pos2 = Random::Int(0, rp[mv.route].size() - 1);
     mv.ord1 = rp[mv.route][mv.pos1];
@@ -554,9 +556,9 @@ bool IntraSwapNeighborhoodExplorer::AnyNextMove(const RoutePlan &rp,
 void
 IntraSwapNeighborhoodExplorer::MakeMove(RoutePlan &rp,
                                       const IntraSwap &mv) const {
-    std::swap(rp[mv.route][pos1], rp[mv.route][pos2]);
+    std::swap(rp[mv.route][mv.pos1], rp[mv.route][mv.pos2]);
     // update timetable
-    UpdateRouteTimetable(sm[mv.route], rp, rp[mv.route]);
+    UpdateRouteTimetable(rp.routetime(mv.route), rp[mv.route]);
 }
 
 int
@@ -564,10 +566,10 @@ IntraSwapNeighborhoodExplorer::DeltaCostFunction(const RoutePlan &rp,
                                                const IntraSwap &mv) const {
     // ugly reduntant data
     routes.push_back(rp[mv.route]);
-    std::swap(routes[0][mv.pos1], routes[0][pos2]);
+    std::swap(routes[0][mv.pos1], routes[0][mv.pos2]);
     timetable.resize(1);
     if (!routes[0].IsExcList())
-        UpdateRouteTimetable(timetable[0], rp, mv.route));
+        UpdateRouteTimetable(timetable[0], rp[mv.route]);
 
     return DeltaObjective(rp, mv) + DeltaViolations(rp, mv);
 }
@@ -591,8 +593,12 @@ int
 IntraSwapNeighborhoodExplorer::DeltaTimeViolationCost(const RoutePlan &rp,
                                         const IntraSwap &mv, int weight) const {
     int delta = 0;
-    if (!rp[mv.old_route].IsExcList())
-        delta += ComputeRouteTimeViolation(rp, 0, mv.route, mv.pos1);
+    if (!rp[mv.route].IsExcList()) {
+        unsigned pos = mv.pos1;
+        if (mv.pos1 > mv.pos2)
+            pos = mv.pos2;
+        delta += ComputeRouteTimeViolation(rp, 0, mv.route, pos);
+    }
 
     return delta;
 }
@@ -613,10 +619,10 @@ int
 IntraSwapNeighborhoodExplorer::DeltaLateReturnCost(const RoutePlan &rp,
                                         const IntraSwap &mv, int weight) const {
     int delta = 0;
-    unsigned shutdown_time = in.get_return_time() + 3600;  // plus 1 hour
+    int shutdown_time = in.get_return_time() + 3600;  // plus 1 hour
 
     for (unsigned j = mv.pos1; j < rp[mv.route].size(); ++j) {
-        if (sm(mv.route, j) > shutdown_time)
+        if (rp(mv.route, j) > shutdown_time)
             --delta;
         if (timetable[0][j] > shutdown_time)
             ++delta;

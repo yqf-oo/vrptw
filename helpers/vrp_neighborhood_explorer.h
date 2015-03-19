@@ -3,7 +3,7 @@
 #include <helpers/NeighborhoodExplorer.hh>
 #include <vector>
 #include <string>
-#include "data/move.h"
+#include "data/neighbor.h"
 #include "data/route.h"
 #include "data/prob_input.h"
 #include "helpers/vrp_state_manager.h"
@@ -20,9 +20,11 @@ public NeighborhoodExplorer<ProbInput, RoutePlan, Move> {
     TabuNeighborhoodExplorer(const ProbInput &in,
                              VRPStateManager &sm, std::string nm):
         NeighborhoodExplorer<ProbInput, RoutePlan, Move>(in, sm, nm) { }
-    void UpdateRouteTimetable(std::vector<int>&, const RoutePlan&, const Route&);
-    int ComputeRouteTimeViolation(const RoutePlan&,
-                                  int, unsigned, unsigned);
+    void UpdateRouteTimetable(std::vector<int>&, const Route&) const;
+    int ComputeRouteTimeViolation(const RoutePlan&, int, unsigned,
+                                  unsigned) const;
+    mutable std::vector<Route> routes;
+    mutable std::vector<std::vector<int> > timetable;
 };
 
 class InsMoveNeighborhoodExplorer: public TabuNeighborhoodExplorer<InsMove> {
@@ -105,7 +107,7 @@ public TabuNeighborhoodExplorer<IntraSwap> {
     void RandomMove(const RoutePlan&, IntraSwap&) const;
     void FirstMove(const RoutePlan&, IntraSwap&) const;
     bool NextMove(const RoutePlan&, IntraSwap&) const;
-    bool FeasibleMove(const RoutePlan&, const InsMove&) const;
+    bool FeasibleMove(const RoutePlan&, const IntraSwap&) const;
     void MakeMove(RoutePlan&, const IntraSwap&) const;
 
     // delta cost
@@ -135,19 +137,19 @@ public TabuNeighborhoodExplorer<IntraSwap> {
 template <class Move>
 void
 TabuNeighborhoodExplorer<Move>::UpdateRouteTimetable(std::vector<int> &ret,
-                                                     const RoutePlan &rp,
-                                                     const Route &r) {
-    int arrive_time = in.get_depart_time();
-    int stop_time = in.get_depart_time();
-    std::string client_from(in.get_depot());
+                                                     const Route &r) const {
+    int arrive_time = this->in.get_depart_time();
+    int stop_time = this->in.get_depart_time();
+    std::string client_from(this->in.get_depot());
     unsigned route_size = r.size();
+    ret.clear();
     for (unsigned i = 0; i <= route_size; ++i) {
-        std::string client_to(in.get_depot());
+        std::string client_to(this->in.get_depot());
         if (i < route_size)
-            client_to = in.OrderVect(rp[i][j]).get_client();
-        int ready_time = in.FindClient(client_to).get_ready_time();
-        arrive_time += in.FindClient(client_from).get_service_time()
-                        + in.get_time_dist(client_from, client_to);
+            client_to = this->in.OrderVect(r[i]).get_client();
+        int ready_time = this->in.FindClient(client_to).get_ready_time();
+        arrive_time += this->in.FindClient(client_from).get_service_time()
+                        + this->in.get_time_dist(client_from, client_to);
 
         if (arrive_time - stop_time > 45 * 360) {    // driving rests
             arrive_time += 45 * 60;
@@ -167,19 +169,22 @@ TabuNeighborhoodExplorer<Move>::UpdateRouteTimetable(std::vector<int> &ret,
 
 template <class Move> int
 TabuNeighborhoodExplorer<Move>::ComputeRouteTimeViolation(const RoutePlan &rp,
-                                    int isnew, unsigned route, unsigned pos) {
+                                                          int isnew,
+                                                          unsigned r,
+                                                          unsigned pos) const {
     int delta = 0;
-    for (unsigned i = pos; i < rp[route].size(); ++i) {
-        client = in.OrderVect(rp[route][i]).get_client();
-        int duetime = in.FindClient(client).get_due_time();
-        int arrive_time = sm(route, i);
+    for (unsigned i = pos; i < rp[r].size(); ++i) {
+        std::string client = this->in.OrderVect(rp[r][i]).get_client();
+        int duetime = this->in.FindClient(client).get_due_time();
+        int arrive_time = rp(r, i);
         if (arrive_time > duetime)
             delta -= arrive_time - duetime;
     }
-        // after move
+
+    // after move
     for (unsigned i = pos; i < routes[isnew].size(); ++i) {
-        client = in.OrderVect(routes[isnew][i]).get_client();
-        int duetime = in.FindClient(client).get_due_time();
+        std::string client = this->in.OrderVect(routes[isnew][i]).get_client();
+        int duetime = this->in.FindClient(client).get_due_time();
         if (timetable[isnew][i] > duetime)
             delta += timetable[isnew][i] - duetime;
     }

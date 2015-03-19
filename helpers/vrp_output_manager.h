@@ -5,22 +5,14 @@
 #include "data/route.h"
 #include "data/prob_input.h"
 
-typedef typename RoutePlan ProbOutput;
+typedef RoutePlan ProbOutput;
 
 class VRPOutputManager: public OutputManager<ProbInput, ProbOutput, RoutePlan> {
  public:
-    VRPOutputManager(const ProbOutput &in, std::string name):
+    VRPOutputManager(const ProbInput &in, std::string name):
         OutputManager<ProbInput, ProbOutput, RoutePlan>(in, name) { }
-    void OutputState(const RoutePlan &st, ProbOutput &out) const;
-    void InputState(RoutePlan &st, const ProbOutput &out) const;
+    void OutputState(const RoutePlan &st, ProbOutput &out) const { out = st; }
+    void InputState(RoutePlan &st, const ProbOutput &out) const { st = out; }
 };
-
-void OutputState(const RoutePlan &st, ProbOutput &out) const {
-    out = st;
-}
-
-void InputState(RoutePlan &st, const ProbOutput &out) const {
-    st = out;
-}
 
 #endif

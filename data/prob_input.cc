@@ -12,7 +12,7 @@
 
 const int kBufSize = 200;
 
-ProbInput::ProbInput(std::fstream &input) {
+ProbInput::ProbInput(std::istream &input) {
     std::string tmp;
     input >> tmp >> tmp;
     name = tmp;  // case name
@@ -58,8 +58,8 @@ ProbInput::ProbInput(std::fstream &input) {
 
 ProbInput::~ProbInput() {
     std::map<std::string, Billing*>::iterator map_it;
-    map_it = billing_imap.cbegin();
-    while (map_it != billing_imap.cend()) {
+    map_it = billing_imap.begin();
+    while (map_it != billing_imap.end()) {
         delete map_it->second;
         ++map_it;
     }
@@ -78,18 +78,18 @@ void ProbInput::ReadDataSection(std::fstream &input) {
     }
 
     // BILLINGS
-    CreateBillingStategy();
+    CreateBillingStategy(input);
 
-    string id1, id2;
+    std::string id1, id2;
     // CARRIERS
     input >> tmp >> tmp;
     site_map.resize(num_carrier, std::vector<bool>(num_region, true));
     for (int i = 0; i < num_carrier; ++i) {
         int num_incompatible_regions;
         input >> id1 >> id2 >> num_incompatible_regions;
-        string region_id;
+        std::string region_id;
         for (int j = 0; j < num_incompatible_regions; ++j) {
-            intput >> region_id;
+            input >> region_id;
             int region_ind = region_imap[region_id];
             assert(region_ind < num_region);
             site_map[i][region_ind] = false;
@@ -122,7 +122,7 @@ void ProbInput::ReadDataSection(std::fstream &input) {
     // EDGES
     input >> tmp >> tmp;
     distance.resize(num_client, std::vector<int>(num_client, -1));
-    time_dist.resize(num_client, std::std::vector<int>(num_client, -1));
+    time_dist.resize(num_client, std::vector<int>(num_client, -1));
     while (input >> tmp) {
         if (tmp == "END")
             break;
@@ -142,19 +142,19 @@ void ProbInput::ReadDataSection(std::fstream &input) {
 
 void ProbInput::CreateBillingStategy(std::fstream &input) {
     int weight = 100;
-    DistanceBillingCostComponent dcc =
+    DistanceBillingCostComponent* dcc =
         new DistanceBillingCostComponent(*this, weight);
-    DistanceLoadBillingCostComponent dlcc =
-        new DistanceBillingCostComponent(*this, weight);
-    LoadRangeBillingCostComponent lrcc =
+    DistanceLoadBillingCostComponent* dlcc =
+        new DistanceLoadBillingCostComponent(*this, weight);
+    LoadRangeBillingCostComponent* lrcc =
         new LoadRangeBillingCostComponent(*this, weight);
-    LoadFarestClientCostComponent lfcc =
+    LoadFarestClientCostComponent* lfcc =
         new LoadFarestClientCostComponent(*this, weight);
-    LoadClientDependentCostComponent lcc =
+    LoadClientDependentCostComponent* lcc =
         new LoadClientDependentCostComponent(*this, weight);
 
     double n;
-    string tmp, id, type;
+    std::string tmp, id, type;
     char buffer[kBufSize];
     input >> tmp;
     for (int i = 0; i < num_billing; ++i) {
@@ -174,7 +174,7 @@ void ProbInput::CreateBillingStategy(std::fstream &input) {
         } else if (type == "bt3") {
             VarLoadBilling *vlc = new VarLoadBilling(id, type);
             vlc->ReadInputData(input, num_region);
-            lkc->SetCostComponent(lrcc);
+            vlc->SetCostComponent(lrcc);
             billing_imap[id] = vlc;
         } else if (type == "bt4") {
             LoadBilling *lfc = new LoadBilling(id, type);
@@ -187,7 +187,7 @@ void ProbInput::CreateBillingStategy(std::fstream &input) {
             ldc->SetCostComponent(lcc);
             billing_imap[id] = ldc;
         } else {
-            cout << "Billing type not implemented" <<endl;
+            std::cout << "Billing type not implemented" << std::endl;
             assert(false);
         }
     }
@@ -200,9 +200,9 @@ void ProbInput::GroupOrder() {
         int og_size = ordergroup_vec.size();
         for (int j = 0; j < og_size; ++j) {
             if (ordergroup_vec[j].IsGroupCompatible(order_vec[i])) {
-                int group_qty = order_vec[i].qty;
-                unsigned max_cap = get_maxcap_for_order(order_vec[i]);
-                if (group_qty + ordergroup_vec[j].get_cap() < max_cap) {
+                int group_qty = order_vec[i].get_demand();
+                int max_cap = get_maxcap_for_order(order_vec[i]);
+                if (group_qty + ordergroup_vec[j].get_demand() < max_cap) {
                     ordergroup_vec[j].insert(order_vec[i]);
                     order_vec[i].set_group(j);
                 } else {
@@ -214,10 +214,10 @@ void ProbInput::GroupOrder() {
     }
 }
 
-unsigned ProbInput::get_maxcap_for_order(const Order &o) const {
+int ProbInput::get_maxcap_for_order(const Order &o) const {
     unsigned max = 0;
     for (int k = 0; k < num_vehicle; ++k) {
-        if (IsReachable(vehicle_vec[k], order_vec[i]))
+        if (IsReachable(vehicle_vec[k], o)) {
             if (max < vehicle_vec[k].get_cap())
                 max = vehicle_vec[k].get_cap();
         }
@@ -227,21 +227,21 @@ unsigned ProbInput::get_maxcap_for_order(const Order &o) const {
 
 int ProbInput::get_distance(const std::string &cli_from,
                              const std::string &cli_to) const {
-    int id_from = FindClient(cli_from);
-    int id_to = FindClient(cli_to);
+    int id_from = IndexClient(cli_from);
+    int id_to = IndexClient(cli_to);
     assert(id_from < num_client && id_to < num_client);
     return distance[id_from][id_to];
 }
 
 int ProbInput::get_time_dist(const std::string &cli_from,
-                              const std::string &clit_to) const {
-    int id_from = FindClient(cli_from);
-    int id_to = FindClient(cli_to);
+                              const std::string &cli_to) const {
+    int id_from = IndexClient(cli_from);
+    int id_to = IndexClient(cli_to);
     assert(id_from < num_client && id_to < num_client);
     return time_dist[id_from][id_to];
 }
 
-int ProbInput::IndexRegion(const string &region_id) const {
+int ProbInput::IndexRegion(const std::string &region_id) const {
     std::map<std::string, int>::const_iterator it;
     it = region_imap.find(region_id);
     if (it != region_imap.end())
@@ -249,7 +249,7 @@ int ProbInput::IndexRegion(const string &region_id) const {
     return -1;  // not found
 }
 
-int ProbInput::FindCarrier(const string &carrier_id) const {
+int ProbInput::FindCarrier(const std::string &carrier_id) const {
     std::map<std::string, int>::const_iterator it;
     it = carrier_imap.find(carrier_id);
     if (it != carrier_imap.end())
@@ -257,25 +257,30 @@ int ProbInput::FindCarrier(const string &carrier_id) const {
     return -1;  // not found
 }
 
-Client& ProbInput::FindClient(const string &client_id) const {
+int ProbInput::IndexClient(const std::string &client_id) const {
     std::map<std::string, int>::const_iterator it;
-    it = client_imap.find(carrier_id);
+    it = client_imap.find(client_id);
     if (it != client_imap.end())
-        return client_vec[it->second];
-    return NULL;
+        return it->second;
+    return -1;
 }
 
-const Billing* ProbInput::FindBiling(int vehicle) const {
+const Client& ProbInput::FindClient(const std::string &client_id) const {
+    int c = IndexClient(client_id);
+    return client_vec[c];
+}
+
+const Billing* ProbInput::FindBilling(int vehicle) const {
     int cr_index = FindCarrier(vehicle_vec[vehicle].get_carrier());
-     std::map<std::string, Billing*>::const_iterator it;
-     it = billing_imap.find(carrier_vec[cr_index].get_billing());
-     if it != billing_imap.end())
+    std::map<std::string, Billing*>::const_iterator it;
+    it = billing_imap.find(carrier_vec[cr_index].get_billing());
+    if (it != billing_imap.end())
         return it->second;
     return NULL;
 }
 
 bool ProbInput::IsReachable(const Vehicle &v, const Order &o) const {
-    int cr_index = carrier_imap[v.get_carrier()];
+    int cr_index = FindCarrier(v.get_carrier());
     int r_index = IndexRegion(FindClient(o.get_client()).get_region());
     assert(cr_index < num_carrier && r_index < num_region);
     return site_map[cr_index][r_index];

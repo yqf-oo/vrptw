@@ -22,7 +22,7 @@ class BillingCostComponent {
     int Weight() const { return weight; }
     virtual ~BillingCostComponent() {}
  protected:
-    std::pair<unsigned, unsigned> MaxRateLoad(const Route&);
+    // std::pair<unsigned, unsigned> MaxRateLoad(const Route&);
     const ProbInput &in;
     int weight;
     const std::string name;
@@ -40,8 +40,9 @@ class LoadFarestClientCostComponent: public BillingCostComponent {
  public:
     LoadFarestClientCostComponent(const ProbInput &in, int weight):
         BillingCostComponent(in, weight, "LoadFarestClientCostComponent") {}
-    // pair<unsigned, unsigned> MaxRateLoad(const Route &r) const;
     int  ComputeCost(const Route &r) const;
+ private:
+    std::pair<int, int> MaxRateLoad(const Route &r) const;
 };
 
 // LoadRangeBillingCostComponent
@@ -52,8 +53,8 @@ class LoadRangeBillingCostComponent: public BillingCostComponent {
         BillingCostComponent(in, weight, "LoadRangeBillingCostComponent") {}
     int  ComputeCost(const Route &r) const;
  private:
-    unsigned FindRange(const Route &r, unsigned load) const;
-    unsigned MaxRate(const Route &r, unsigned range) const;
+    unsigned FindRange(const Route &r, int load) const;
+    int MaxRate(const Route &r, unsigned range) const;
 };
 
 // DistanceLoadBillingCostComponent
@@ -65,6 +66,7 @@ class DistanceLoadBillingCostComponent: public BillingCostComponent {
     // pair<unsigned, unsigned> MaxRateLoad(const Route &r) const;
     int ComputeCost(const Route &r) const;
  private:
+    std::pair<int, int> MaxRateLoad(const Route &r) const;
     bool IsFull(const Route &r) const;
 };
 

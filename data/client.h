@@ -5,7 +5,7 @@
 #include <string>
 
 class Client{
-    // friend std::iostream& operator>>(std::iostream&, const Client&);
+    friend std::istream& operator>>(std::istream&, Client&);
  public:
     Client() { }
     // st in minutes

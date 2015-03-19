@@ -6,7 +6,7 @@
 #include <utility>
 
 class Order {
-    friend std::istream& operator>>(std::istream&, const Order&);
+    friend std::istream& operator>>(std::istream&, Order&);
  public:
     Order(): quantity(0), mandatory(0), group(0) { }
     Order(const Order &o):
@@ -19,7 +19,7 @@ class Order {
         date_window(rd, dd) { }
     std::string get_id() const { return id; }
     std::string get_client() const { return id_client; }
-    unsigned get_demand() const { return quantity; }
+    int get_demand() const { return quantity; }
     std::pair<int, int> get_dw() const { return date_window; }
     bool IsMandatory() const { return mandatory; }
     bool IsDayFeasible(int day) const {
@@ -29,7 +29,7 @@ class Order {
 
  protected:
     std::string id, id_client;
-    unsigned quantity;
+    int quantity;
     bool mandatory;
     std::pair<int, int> date_window;
 
@@ -42,7 +42,7 @@ class OrderGroup : public Order {
     OrderGroup(const Order &o): Order(o), members() { members.push_back(o.get_id()); }
     OrderGroup(const OrderGroup &og): Order(og), members(og.members) { }
     unsigned size() const { return members.size(); }
-    void insert(const Order &);
+    void insert(const Order&);
     bool IsGroupCompatible(const Order& o) const {
         return ((o.get_client() == id_client) && (o.IsMandatory() == mandatory)
                  && (o.get_dw() == date_window));

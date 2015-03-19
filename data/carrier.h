@@ -1,5 +1,5 @@
-#ifndef _CARRIER_H
-#define _CARRIER_H
+#ifndef _CARRIER_H_
+#define _CARRIER_H_
 #include <iostream>
 #include <vector>
 #include <string>

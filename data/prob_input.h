@@ -18,10 +18,11 @@
 class ProbInput {
  public:
     // ignore VRPPC temporarily
-    ProbInput(std::fstream&);
+    ProbInput(std::istream&);
     ~ProbInput();
     int IndexRegion(const std::string&) const;
     int FindCarrier(const std::string&) const;
+    int IndexClient(const std::string&) const;
     const Client& FindClient(const std::string&) const;
     const Billing* FindBilling(int v) const;
     std::string get_depot() const { return depot_id; }
@@ -58,7 +59,7 @@ class ProbInput {
     void ReadDataSection(std::fstream&);
     void CreateBillingStategy(std::fstream&);
     void GroupOrder();
-    unsigned get_maxcap_for_order(const Order&) const;
+    int get_maxcap_for_order(const Order&) const;
     std::string name, depot_id;
     int num_client;
     int num_vehicle;
@@ -76,7 +77,7 @@ class ProbInput {
     std::vector<OrderGroup> ordergroup_vec;
     // std::vector<Billing*> billing_vec;
 
-    std::vector<std::vector<int> > distace;  // in meters
+    std::vector<std::vector<int> > distance;  // in meters
     std::vector<std::vector<int> > time_dist;  // in seconds
 
     // Id maps

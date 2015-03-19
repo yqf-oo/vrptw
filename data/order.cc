@@ -2,7 +2,7 @@
 #include <utility>
 #include "data/order.h"
 
-std::istream& Order::operator>>(std::istream &is, const Order &o) {
+std::istream& operator>>(std::istream &is, Order &o) {
     is >> o.id >> o.id_client >> o.quantity >> o.mandatory
        >> o.date_window.first >> o.date_window.second;
     return is;
@@ -18,6 +18,6 @@ OrderGroup& OrderGroup::operator=(const OrderGroup &og) {
 }
 
 void OrderGroup::insert(const Order &o) {
-    members.push_back(o.id);
-    quantity += o.quantity;
+    members.push_back(o.get_id());
+    quantity += o.get_demand();
 }

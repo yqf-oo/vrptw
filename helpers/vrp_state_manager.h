@@ -17,10 +17,10 @@ class VRPStateManager: public StateManager<ProbInput, RoutePlan> {
     int CostFunction(const RoutePlan&) const;
     int Objective(const RoutePlan&) const;
     int Violations(const RoutePlan&) const;
-    int operator() (unsigned r, unsigned o) const { return timetable[r][o]; }
-    int& operator() (unsigned r, unsigned o ) { return timetable[r][o]; }
-    const std::vector<int>& operator[](unsigned i) const { return timetable[i]; }
-    std::vector<int>& operator[](unsigned i) { return timetable[i]; }
+    // int operator() (unsigned r, unsigned o) const { return timetable[r][o]; }
+    // int& operator() (unsigned r, unsigned o ) { return timetable[r][o]; }
+    // const std::vector<int>& operator[](unsigned i) const { return timetable[i]; }
+    // std::vector<int>& operator[](unsigned i) { return timetable[i]; }
  private:
     void ResetState(RoutePlan&);
     void UpdateTimeTable(RoutePlan&);
@@ -30,7 +30,6 @@ class VRPStateManager: public StateManager<ProbInput, RoutePlan> {
     int ComputeTranportationCost(const RoutePlan&) const;         // s4
     int ComputeCapExceededCost(const RoutePlan&, int) const;      // h1
     int ComputeLateReturnCost(const RoutePlan&, int) const;       // h2
-    std::vector<std::vector<int> > timetable;
 };
 
 #endif

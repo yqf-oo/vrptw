@@ -32,7 +32,7 @@ bool InterSwapTabuListManager::Inverse(const InterSwap &mt,
 }
 
 bool IntraSwapTabuListManager::Inverse(const IntraSwap &mt,
-                                       const IntraSwap &mt) const {
+                                       const IntraSwap &me) const {
     if (me.ord1 == mt.ord1 || me.ord2 == mt.ord2 ||
         me.ord1 == mt.ord2 || me.ord2 == mt.ord1)
         return true;
