@@ -1,8 +1,7 @@
+#include "data/route.h"
 #include <vector>
 #include <string>
 #include <utility>
-#include "data/route.h"
-#include "data/prob_input.h"
 
 std::ostream& operator<<(std::ostream &os, const RoutePlan &rp) {
     for (int i = 1; i <= in.get_dayspan(); ++i) {

@@ -3,10 +3,10 @@
 
 class InsMove {
  public:
-    InsMove(unsigned o, unsigned ro, unsigned po,
-            unsigned rn, unsigned pn):
-        order(o), old_route(ro), old_pos(po),
-        new_route(rn), new_pos(pn) { }
+    // InsMove(unsigned o, unsigned ro, unsigned po,
+    //         unsigned rn, unsigned pn):
+    //     order(o), old_route(ro), old_pos(po),
+    //     new_route(rn), new_pos(pn) { }
 
     bool operator==(const InsMove&) const;
     bool operator!=(const InsMove&) const;
@@ -17,10 +17,10 @@ class InsMove {
 
 class InterSwap {
  public:
-    InterSwap(unsigned o1, unsigned o2, unsigned r1,
-              unsigned r2, unsigned p1, unsigned p2):
-        ord1(o1), ord2(o2), route1(r1),
-        route2(r2), pos1(p1), pos2(p2) { }
+    // InterSwap(unsigned o1, unsigned o2, unsigned r1,
+    //           unsigned r2, unsigned p1, unsigned p2):
+    //     ord1(o1), ord2(o2), route1(r1),
+    //     route2(r2), pos1(p1), pos2(p2) { }
 
     bool operator==(const InterSwap&) const;
     bool operator!=(const InterSwap&) const;
@@ -31,9 +31,9 @@ class InterSwap {
 
 class IntraSwap {
  public:
-    IntraSwap(unsigned o1, unsigned o2, unsigned r,
-              unsigned p1, unsigned p2):
-        ord1(o1), ord2(o2), route(r), pos1(p1), pos2(p2) { }
+    // IntraSwap(unsigned o1, unsigned o2, unsigned r,
+    //           unsigned p1, unsigned p2):
+    //     ord1(o1), ord2(o2), route(r), pos1(p1), pos2(p2) { }
 
     bool operator==(const IntraSwap&) const;
     bool operator!=(const IntraSwap&) const;

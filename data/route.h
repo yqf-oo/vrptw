@@ -2,8 +2,7 @@
 #define _ROUTE_H
 #include <iostream>
 #include <vector>
-
-class ProbInput;
+#include "data/prob_input.h"
 
 class Route {
  public:
@@ -13,7 +12,7 @@ class Route {
         day(0), vehicle(0), exc_list(true), orders(ov) { }
     Route(const Route &r): day(r.day), vehicle(r.vehicle),
                            exc_list(r.exc_list), orders(r.orders) { }
-    int size() const { return orders.size(); }
+    unsigned size() const { return orders.size(); }
     unsigned length(const ProbInput&) const;
     unsigned demand(const ProbInput&) const;
     unsigned get_day() const { return day; }
@@ -47,7 +46,7 @@ class RoutePlan {
         in(rp.in), routes(rp.routes), plan(rp.plan) { }
     void AddOrder(int , unsigned, unsigned, bool);
     void AddRoute(const Route &r) { routes.push_back(r); }
-    int size() const { return routes.size(); }
+    unsigned size() const { return routes.size(); }
     // int& get_est(int route, int order) { return timetable[route][order]; }
     const Route& operator[] (int i) const { return routes[i]; }
     Route& operator[] (int i) { return routes[i]; }

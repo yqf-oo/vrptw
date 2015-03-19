@@ -20,59 +20,52 @@ class ProbInput {
     // ignore VRPPC temporarily
     ProbInput(std::fstream&);
     ~ProbInput();
-    int IndexRegion(const std::string &region_id) {
-        return region_imap[region_id];
-    }
-    const Client& FindClient(const std::string&);
-    int FindCarrier(const std::string &carrier_id) {
-        return carrier_imap[carrier_id];
-    }
-    const Billing* FindBilling(const int &vehicle) {
-        int cr_index = carrier_imap[vehicle_vec[vehicle].get_carrier()];
-        return billing_imap[carrier_vec[cr_index].get_billing()];
-    }
+    int IndexRegion(const std::string&) const;
+    int FindCarrier(const std::string&) const;
+    const Client& FindClient(const std::string&) const;
+    const Billing* FindBilling(int v) const;
     std::string get_depot() const { return depot_id; }
-    unsigned get_num_client() const { return num_client; }
-    unsigned get_num_order() const { return num_order; }
-    unsigned get_num_og() const { return ordergroup_vec.size(); }
-    unsigned get_num_vehicle() const { return num_vehicle; }
-    unsigned get_num_region() const { return num_region; }
-    unsigned get_num_carrier() const { return num_carrier; }
-    unsigned get_num_billing() const { return num_billing; }
-    const Order& OrderVect(unsigned i) {
-        assert(i < num_order);
+    int get_num_client() const { return num_client; }
+    int get_num_order() const { return num_order; }
+    int get_num_og() const { return ordergroup_vec.size(); }
+    int get_num_vehicle() const { return num_vehicle; }
+    int get_num_region() const { return num_region; }
+    int get_num_carrier() const { return num_carrier; }
+    int get_num_billing() const { return num_billing; }
+    const Order& OrderVect(int i) const {
+        assert(i < num_order && i >= 0);
         return order_vec[i];
     }
-    const Vehicle& VehicleVect(unsigned i) {
-        assert(i < num_vehicle);
+    const Vehicle& VehicleVect(int i) const {
+        assert(i < num_vehicle && i >= 0);
         return vehicle_vec[i];
     }
     int get_dayspan() const {
         return plan_horizon.second - plan_horizon.first + 1;
     }
-    int get_depart_time() {
-        return client_vec[client_imap[depot_id]].get_ready_time();
+    int get_depart_time() const {
+        return FindClient(depot_id).get_ready_time();
     }
-    int get_return_time() {
-        return client_vec[client_imap[depot_id]].get_due_time();
+    int get_return_time() const {
+        return FindClient(depot_id).get_due_time();
     }
     const std::pair<int, int>& get_plan_horizon() const { return plan_horizon; }
-    int get_distance(const std::string&, const std::string&);
-    int get_time_dist(const std::string&, const std::string&);
+    int get_distance(const std::string&, const std::string&) const;
+    int get_time_dist(const std::string&, const std::string&) const;
     bool IsReachable(const Vehicle&, const Order&) const;
 
  private:
     void ReadDataSection(std::fstream&);
     void CreateBillingStategy(std::fstream&);
     void GroupOrder();
-    unsigned get_maxcap_for_order(const Order&);
+    unsigned get_maxcap_for_order(const Order&) const;
     std::string name, depot_id;
-    unsigned num_client;
-    unsigned num_vehicle;
-    unsigned num_order;
-    unsigned num_region;
-    unsigned num_carrier;
-    unsigned num_billing;
+    int num_client;
+    int num_vehicle;
+    int num_order;
+    int num_region;
+    int num_carrier;
+    int num_billing;
     std::pair<int, int> plan_horizon;
 
     // Data section

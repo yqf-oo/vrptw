@@ -1,7 +1,9 @@
 #include "helpers/billing_cost_component.h"
 #include <cmath>
 #include <utility>
+#include "data/route.h"
 #include "data/billing.h"
+#include "data/prob_input.h"
 
 std::pair<unsigned, unsigned>
 BillingCostComponent::MaxRateLoad(const Route &r) {

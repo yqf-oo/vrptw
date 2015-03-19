@@ -8,8 +8,6 @@
 #include "data/prob_input.h"
 #include "helpers/vrp_state_manager.h"
 
-typedef NeighborhoodExplorer<ProbInput, RoutePlan, InsMove> NeiExp;
-
 template <class Move>
 class TabuNeighborhoodExplorer:
 public NeighborhoodExplorer<ProbInput, RoutePlan, Move> {
@@ -19,14 +17,12 @@ public NeighborhoodExplorer<ProbInput, RoutePlan, Move> {
     virtual bool NextMove(const RoutePlan&, Move&) const = 0;
     virtual void MakeMove(RoutePlan&, const Move&) const = 0;
  protected:
-    TabuNeighborhoodExplorer(const ProbInput& in,
-                             VRPStateManager& sm, string nm):
+    TabuNeighborhoodExplorer(const ProbInput &in,
+                             VRPStateManager &sm, std::string nm):
         NeighborhoodExplorer<ProbInput, RoutePlan, Move>(in, sm, nm) { }
-    void UpdateRouteTimetable(std::vector<int>&, const Route&);
+    void UpdateRouteTimetable(std::vector<int>&, const RoutePlan&, const Route&);
     int ComputeRouteTimeViolation(const RoutePlan&,
                                   int, unsigned, unsigned);
-    std::vector<Route> routes;
-    std::vector<std::vector<int>> timetable;
 };
 
 class InsMoveNeighborhoodExplorer: public TabuNeighborhoodExplorer<InsMove> {
@@ -88,7 +84,7 @@ public TabuNeighborhoodExplorer<InterSwap> {
     int DeltaDateViolationCost(const RoutePlan&,
                                     const InterSwap&, int) const;   // s1
     int DeltaTimeViolationCost(const RoutePlan&,
-                                    const InterSwap& int) const;    // s2
+                                    const InterSwap&, int) const;    // s2
     int DeltaOptOrderCost(const RoutePlan&,
                                     const InterSwap&, int) const;   // s3
     int DeltaTranportationCost(const RoutePlan&, const InterSwap&) const;
@@ -139,11 +135,13 @@ public TabuNeighborhoodExplorer<IntraSwap> {
 template <class Move>
 void
 TabuNeighborhoodExplorer<Move>::UpdateRouteTimetable(std::vector<int> &ret,
+                                                     const RoutePlan &rp,
                                                      const Route &r) {
     int arrive_time = in.get_depart_time();
     int stop_time = in.get_depart_time();
+    std::string client_from(in.get_depot());
     unsigned route_size = r.size();
-    for (int i = 0; i <= route_size; ++i) {
+    for (unsigned i = 0; i <= route_size; ++i) {
         std::string client_to(in.get_depot());
         if (i < route_size)
             client_to = in.OrderVect(rp[i][j]).get_client();
@@ -162,15 +160,16 @@ TabuNeighborhoodExplorer<Move>::UpdateRouteTimetable(std::vector<int> &ret,
             arrive_time = ready_time;
         }
         ret.push_back(arrive_time);
+        client_from = client_to;
     }
-    return ret;
+    return;
 }
 
 template <class Move> int
 TabuNeighborhoodExplorer<Move>::ComputeRouteTimeViolation(const RoutePlan &rp,
                                     int isnew, unsigned route, unsigned pos) {
     int delta = 0;
-    for (int i = pos; i < rp[route].size(); ++i) {
+    for (unsigned i = pos; i < rp[route].size(); ++i) {
         client = in.OrderVect(rp[route][i]).get_client();
         int duetime = in.FindClient(client).get_due_time();
         int arrive_time = sm(route, i);
@@ -178,7 +177,7 @@ TabuNeighborhoodExplorer<Move>::ComputeRouteTimeViolation(const RoutePlan &rp,
             delta -= arrive_time - duetime;
     }
         // after move
-    for (int i = pos; i < routes[isnew].size(); ++i) {
+    for (unsigned i = pos; i < routes[isnew].size(); ++i) {
         client = in.OrderVect(routes[isnew][i]).get_client();
         int duetime = in.FindClient(client).get_due_time();
         if (timetable[isnew][i] > duetime)

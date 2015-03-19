@@ -3,8 +3,9 @@
 #include <iostream>
 #include <string>
 #include <utility>
-#include "data/prob_input.h"
-#include "data/route.h"
+
+class Route;
+class ProbInput;
 
 class BillingCostComponent {
  public:
