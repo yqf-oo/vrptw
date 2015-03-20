@@ -38,6 +38,7 @@ class Route {
 };
 
 class RoutePlan {
+    friend std::istream& operator>>(std::istream&, RoutePlan&);
     friend std::ostream& operator<<(std::ostream&, const RoutePlan&);
 
  public:

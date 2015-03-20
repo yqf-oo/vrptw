@@ -3,6 +3,10 @@
 #include <string>
 #include <utility>
 
+std::istream& operator>>(std::istream &is, RoutePlan &rp) {
+    return is;
+}
+
 std::ostream& operator<<(std::ostream &os, const RoutePlan &rp) {
     for (int i = 1; i <= rp.in.get_dayspan(); ++i) {
         os << "Day " << i <<" :" << std::endl;

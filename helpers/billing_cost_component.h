@@ -16,8 +16,8 @@ class BillingCostComponent {
         return weight * ComputeCost(r);
     }
     std::string Name() const { return name; }
-    virtual void PrintViolations(const Route &r, unsigned route_index,
-                                 std::ostream &os = std::cout);
+    // virtual void PrintViolations(const Route &r, unsigned route_index,
+    //                              std::ostream &os = std::cout);
     void SetWeight(const unsigned w) { weight = w; }
     int Weight() const { return weight; }
     virtual ~BillingCostComponent() {}

@@ -65,7 +65,7 @@ ProbInput::~ProbInput() {
     }
 }
 
-void ProbInput::ReadDataSection(std::fstream &input) {
+void ProbInput::ReadDataSection(std::istream &input) {
     std::string tmp;
     input >> tmp;
     input >> tmp >> tmp;
@@ -140,7 +140,7 @@ void ProbInput::ReadDataSection(std::fstream &input) {
     }
 }
 
-void ProbInput::CreateBillingStategy(std::fstream &input) {
+void ProbInput::CreateBillingStategy(std::istream &input) {
     int weight = 100;
     DistanceBillingCostComponent* dcc =
         new DistanceBillingCostComponent(*this, weight);

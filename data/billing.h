@@ -23,8 +23,6 @@ class Billing {
     std::string get_id() const { return id; }
     std::string get_type() const { return type; }
 
-    virtual int get_km_rate() const { return 0; }
-
  protected:
     std::string id, type;
     BillingCostComponent *cost_component;

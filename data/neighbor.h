@@ -1,7 +1,9 @@
 #ifndef _NEIGHBOR_H_
 #define _NEIGHBOR_H_
+#include <iostream>
 
 class InsMove {
+    friend std::ostream& operator<<(std::ostream&, const InsMove&);
  public:
     // InsMove(unsigned o, unsigned ro, unsigned po,
     //         unsigned rn, unsigned pn):
@@ -16,6 +18,7 @@ class InsMove {
 };
 
 class InterSwap {
+    friend std::ostream& operator<<(std::ostream&, const InterSwap&);
  public:
     // InterSwap(unsigned o1, unsigned o2, unsigned r1,
     //           unsigned r2, unsigned p1, unsigned p2):
@@ -30,6 +33,7 @@ class InterSwap {
 };
 
 class IntraSwap {
+    friend std::ostream& operator<<(std::ostream&, const IntraSwap&);
  public:
     // IntraSwap(unsigned o1, unsigned o2, unsigned r,
     //           unsigned p1, unsigned p2):

@@ -56,8 +56,8 @@ class ProbInput {
     bool IsReachable(const Vehicle&, const Order&) const;
 
  private:
-    void ReadDataSection(std::fstream&);
-    void CreateBillingStategy(std::fstream&);
+    void ReadDataSection(std::istream&);
+    void CreateBillingStategy(std::istream&);
     void GroupOrder();
     int get_maxcap_for_order(const Order&) const;
     std::string name, depot_id;
