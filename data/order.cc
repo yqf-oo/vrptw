@@ -21,3 +21,9 @@ void OrderGroup::insert(const Order &o) {
     members.push_back(o.get_id());
     quantity += o.get_demand();
 }
+
+bool OrderGroup::IsGroupCompatible(const Order &o) const {
+    return ((o.get_client() == id_client)
+            && (o.IsMandatory() == mandatory)
+            && (o.get_dw() == date_window));
+}

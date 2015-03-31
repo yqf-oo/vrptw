@@ -6,6 +6,7 @@
 
 class Route {
  public:
+    Route(): day(-1), vehicle(-1) { }
     Route(int oid, int d, int vi, bool ex):
         day(d), vehicle(vi), exc_list(ex), orders(1, oid) { }
     Route(std::vector<int> ov):
@@ -18,11 +19,13 @@ class Route {
     int get_day() const { return day; }
     int get_vehicle() const { return vehicle; }
     bool IsExcList() const { return exc_list; }
+    unsigned get_num_order(const ProbInput&) const;
     void push_back(int order_index) { orders.push_back(order_index); }
     void erase(unsigned pos) { orders.erase(orders.begin() + pos); }
     void insert(unsigned pos, int order) {
         orders.insert(orders.begin() + pos, order);
     }
+    void clear() { orders.clear(); }
     const int& operator[] (int i) const { return orders[i]; }
     int& operator[] (int i) { return orders[i]; }
     Route& operator=(const Route &r) {
@@ -47,18 +50,17 @@ class RoutePlan {
         in(rp.in), routes(rp.routes), plan(rp.plan), timetable(rp.timetable) { }
     void AddOrder(int , unsigned, unsigned, bool);
     void AddRoute(const Route &r) { routes.push_back(r); }
-    void ResizeTimetable(unsigned sz) { timetable.resize(sz); }
+    // void ResizeTimetable(unsigned sz) { timetable.resize(sz); }
     void ResizeRouteTimetable(unsigned i, unsigned sz, int val) {
         if (i >= timetable.size())
             return;
         timetable[i].resize(sz, val);
     }
     unsigned size() const { return routes.size(); }
-    // int& get_est(int route, int order) { return timetable[route][order]; }
     const Route& operator[] (int i) const { return routes[i]; }
     Route& operator[] (int i) { return routes[i]; }
-    int vd_route(unsigned v, unsigned d) const { return plan[v][d]; }
-    int& vd_route(unsigned v, unsigned d) { return plan[v][d]; }
+    // int vd_route(unsigned v, unsigned d) const { return plan[v][d]; }
+    // int& vd_route(unsigned v, unsigned d) { return plan[v][d]; }
     std::vector<int>& routetime(int i) { return timetable[i]; }
     int operator() (unsigned r, unsigned o) const { return timetable[r][o]; }
     int& operator() (unsigned r, unsigned o) { return timetable[r][o]; }
@@ -75,7 +77,7 @@ class RoutePlan {
     void Allocate();
     const ProbInput &in;
     std::vector<Route> routes;
-    std::vector<std::vector<int> > plan;
+    // std::vector<std::vector<int> > plan;
     std::vector<std::vector<int> > timetable;
 };
 #endif

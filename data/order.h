@@ -23,7 +23,8 @@ class Order {
     std::pair<int, int> get_dw() const { return date_window; }
     bool IsMandatory() const { return mandatory; }
     bool IsDayFeasible(int day) const {
-        return (day >= date_window.first && day <= date_window.second); }
+        return (day >= date_window.first && day <= date_window.second);
+    }
     void set_group(int i) { group = i; }
     int get_group() const { return group; }
 
@@ -43,11 +44,9 @@ class OrderGroup : public Order {
     OrderGroup(const OrderGroup &og): Order(og), members(og.members) { }
     unsigned size() const { return members.size(); }
     void insert(const Order&);
-    bool IsGroupCompatible(const Order& o) const {
-        return ((o.get_client() == id_client) && (o.IsMandatory() == mandatory)
-                 && (o.get_dw() == date_window));
-    }
+    bool IsGroupCompatible(const Order&) const;
     std::string& operator[](unsigned i) { return members[i]; }
+    const std::string& operator[](unsigned i) const { return members[i]; }
     OrderGroup& operator=(const OrderGroup&);
  private:
     std::vector<std::string> members;

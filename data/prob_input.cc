@@ -54,6 +54,8 @@ ProbInput::ProbInput(std::istream &input) {
     getline(input, tmp);
 
     ReadDataSection(input);
+    UpdateReachabilityMap();
+    GroupOrder();
 }
 
 ProbInput::~ProbInput() {
@@ -117,24 +119,26 @@ void ProbInput::ReadDataSection(std::istream &input) {
     order_vec.resize(num_order);
     for (int i = 0; i < num_order; ++i)
         input >> order_vec[i];
-    GroupOrder();
+
 
     // EDGES
     input >> tmp >> tmp;
+    getline(input, tmp);
     distance.resize(num_client, std::vector<int>(num_client, -1));
     time_dist.resize(num_client, std::vector<int>(num_client, -1));
-    while (input >> tmp) {
-        if (tmp == "END")
-            break;
-
+    while (getline(input, tmp)) {
+        if (tmp == "END") break;
         std::istringstream ss(tmp);
         double dist_km;
         int dist_sec, ind1, ind2;
         ss >> id1 >> id2 >> dist_km >> dist_sec;
-        ind1 = client_imap[id1];
-        ind2 = client_imap[id2];
+        ind1 = IndexClient(id1);
+        ind2 = IndexClient(id2);
 
-        assert(ind1 < num_client && ind2 < num_client);
+        // std::cout << id1 << ':' << ind1 << ','
+        //           << id2 << ':' << ind2 << std::endl;
+        assert(ind1 >= 0 && ind1 < num_client);
+        assert(ind2 >= 0 && ind2 < num_client);
         distance[ind1][ind2] = static_cast<unsigned>(dist_km + 0.5);
         time_dist[ind1][ind2] = dist_sec;
     }
@@ -194,30 +198,34 @@ void ProbInput::CreateBillingStategy(std::istream &input) {
 }
 
 void ProbInput::GroupOrder() {
+    bool add = false;
     OrderGroup og(order_vec[0]);
     ordergroup_vec.push_back(og);
-    for (int i = 1; i < num_order; i++) {
+    for (int i = 1; i < num_order; ++i) {
         int og_size = ordergroup_vec.size();
         for (int j = 0; j < og_size; ++j) {
             if (ordergroup_vec[j].IsGroupCompatible(order_vec[i])) {
-                int group_qty = order_vec[i].get_demand();
-                int max_cap = get_maxcap_for_order(order_vec[i]);
-                if (group_qty + ordergroup_vec[j].get_demand() < max_cap) {
+                int group_qty = ordergroup_vec[j].get_demand();
+                int max_cap = get_maxcap_for_order(i);
+                if (group_qty +  order_vec[i].get_demand() <= max_cap) {
                     ordergroup_vec[j].insert(order_vec[i]);
                     order_vec[i].set_group(j);
-                } else {
-                    ordergroup_vec.push_back(order_vec[i]);
-                    order_vec[i].set_group(order_vec.size() - 1);
+                    add = true;
                 }
             }
         }
+        if (!add) {
+            ordergroup_vec.push_back(OrderGroup(order_vec[i]));
+            order_vec[i].set_group(ordergroup_vec.size() - 1);
+        }
+        add = false;
     }
 }
 
-int ProbInput::get_maxcap_for_order(const Order &o) const {
+int ProbInput::get_maxcap_for_order(int o) const {
     unsigned max = 0;
     for (int k = 0; k < num_vehicle; ++k) {
-        if (IsReachable(vehicle_vec[k], o)) {
+        if (IsReachable(k, o)) {
             if (max < vehicle_vec[k].get_cap())
                 max = vehicle_vec[k].get_cap();
         }
@@ -277,6 +285,24 @@ const Billing* ProbInput::FindBilling(int vehicle) const {
     if (it != billing_imap.end())
         return it->second;
     return NULL;
+}
+
+void ProbInput::UpdateReachabilityMap() {
+    rmap.resize(num_vehicle, std::vector<bool>(num_order, true));
+    for (int i = 0; i < num_vehicle; ++i) {
+        for (int j = 0; j < num_order; ++j) {
+            int cr_index = FindCarrier(vehicle_vec[i].get_carrier());
+            std::string client_id = order_vec[j].get_client();
+            int r_index = IndexRegion(FindClient(client_id).get_region());
+            assert(cr_index < num_carrier && r_index < num_region);
+            rmap[i][j] = site_map[cr_index][r_index];
+        }
+    }
+}
+
+bool ProbInput::IsReachable(int v, int o) const {
+    assert(v < num_vehicle && o < num_order);
+    return rmap[v][o];
 }
 
 bool ProbInput::IsReachable(const Vehicle &v, const Order &o) const {

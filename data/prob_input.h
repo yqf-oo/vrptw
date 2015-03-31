@@ -28,7 +28,7 @@ class ProbInput {
     std::string get_depot() const { return depot_id; }
     int get_num_client() const { return num_client; }
     int get_num_order() const { return num_order; }
-    int get_num_og() const { return ordergroup_vec.size(); }
+    int get_num_ogroup() const { return ordergroup_vec.size(); }
     int get_num_vehicle() const { return num_vehicle; }
     int get_num_region() const { return num_region; }
     int get_num_carrier() const { return num_carrier; }
@@ -36,6 +36,10 @@ class ProbInput {
     const Order& OrderVect(int i) const {
         assert(i < num_order && i >= 0);
         return order_vec[i];
+    }
+    const OrderGroup& OrderGroupVect(int i) const {
+        assert(i < get_num_ogroup() && i >= 0);
+        return ordergroup_vec[i];
     }
     const Vehicle& VehicleVect(int i) const {
         assert(i < num_vehicle && i >= 0);
@@ -53,13 +57,15 @@ class ProbInput {
     const std::pair<int, int>& get_plan_horizon() const { return plan_horizon; }
     int get_distance(const std::string&, const std::string&) const;
     int get_time_dist(const std::string&, const std::string&) const;
+    bool IsReachable(int, int) const;
     bool IsReachable(const Vehicle&, const Order&) const;
 
  private:
     void ReadDataSection(std::istream&);
     void CreateBillingStategy(std::istream&);
+    void UpdateReachabilityMap();
     void GroupOrder();
-    int get_maxcap_for_order(const Order&) const;
+    int get_maxcap_for_order(int) const;
     std::string name, depot_id;
     int num_client;
     int num_vehicle;
@@ -87,5 +93,6 @@ class ProbInput {
     std::map<std::string, Billing*> billing_imap;
 
     std::vector<std::vector<bool> > site_map;
+    std::vector<std::vector<bool> > rmap;
 };
 #endif

@@ -9,50 +9,31 @@
 #include "data/billing.h"
 #include "helpers/billing_cost_component.h"
 
-void VRPStateManager::RandomState(RoutePlan& rp) {
+void VRPStateManager::RandomState(RoutePlan &rp) {
     ResetState(rp);
-    const std::pair<int, int> &plan_horizon = in.get_plan_horizon();
     std::vector<int> unschduled_orders;
-    bool unschduled = false;
-    assert(plan_horizon.first >= 1);
     for (int i = 0, rnd = 0; i < in.get_num_order(); ++i) {
-        int day, vid;
-        do {
-            day = Random::Int(0, plan_horizon.second - 1);
-            if (++rnd > in.get_dayspan()) {
-                unschduled = true;
-                break;
-            }
-        }while(!in.OrderVect(i).IsDayFeasible(day));
-        rnd = 0;
-        if (!unschduled) {
-            do {
-                vid = Random::Int(0, in.get_num_vehicle() - 1);
-                if (++rnd > in.get_num_vehicle()) {
-                    unschduled = true;
-                    break;
-                }
-            }while(!in.IsReachable(in.VehicleVect(vid), in.OrderVect(i)));
-        }
-        if (unschduled)
-            unschduled_orders.push_back(i);
-        else
-            rp.AddOrder(i, 0, 0, unschduled);
+        const Order &o = in.OrderVect(i)
+        std::pair<int, int> date_window = o.get_dw();
+        assert(date_window.first >= 1);
+        int day = Random::Int(date_window.first - 1, date_window.second - 1);
+        assert(o.IsDayFeasible(day + 1));
+
+        std::vector<int> rvec(0);
+        for (int k = 0; k < in.get_num_vehicle(); ++k)
+            if (in.IsReachable(k, i))
+                rvec.push_back(k);
+        int idx = Random::Int(0, rvec.size() - 1);
+        rp.AddOrder(i, day, rvec[idx], false);
     }
-    rp.AddRoute(Route(unschduled_orders));
-    UpdateTimeTable(rp);
 }
 
 void VRPStateManager::ResetState(RoutePlan &rp) {
-    for (int i = 0; i < in.get_num_vehicle(); ++i) {
-        for (int j = 0; j < in.get_dayspan(); ++j) {
-            rp.vd_route(i, j) = -1;
-        }
-    }
+    for (unsigned i = 0; i < rp.size(); ++i)
+        rp[i].clear();
 }
 
 void VRPStateManager::UpdateTimeTable(RoutePlan &rp) {
-    rp.ResizeTimetable(rp.size());
     for (unsigned i = 0; i < rp.size(); ++i) {
         std::string client_from(in.get_depot());
         int arrive_time = in.get_depart_time();
