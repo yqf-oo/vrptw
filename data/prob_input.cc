@@ -145,7 +145,7 @@ void ProbInput::ReadDataSection(std::istream &input) {
 }
 
 void ProbInput::CreateBillingStategy(std::istream &input) {
-    int weight = 100;
+    int weight = 1;
     DistanceBillingCostComponent* dcc =
         new DistanceBillingCostComponent(*this, weight);
     DistanceLoadBillingCostComponent* dlcc =

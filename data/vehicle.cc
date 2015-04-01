@@ -2,6 +2,6 @@
 #include "data/vehicle.h"
 
 std::istream& operator>>(std::istream &is, Vehicle &v) {
-    is >> v.id >> v.capacity >> v.fixed_cost >> v.id_carrier;
+    is >> v.id_ >> v.capacity_ >> v.fixed_cost_ >> v.id_carrier_;
     return is;
 }

@@ -21,7 +21,7 @@ public NeighborhoodExplorer<ProbInput, RoutePlan, Move> {
                              VRPStateManager &sm, std::string nm):
         NeighborhoodExplorer<ProbInput, RoutePlan, Move>(in, sm, nm) { }
     void UpdateRouteTimetable(std::vector<int>&, const Route&) const;
-    int ComputeRouteTimeViolation(const RoutePlan&, int, unsigned,
+    int DeltaRouteTimeViolation(const RoutePlan&, int, unsigned,
                                   unsigned) const;
     mutable std::vector<Route> routes;
     mutable std::vector<std::vector<int> > timetable;
@@ -146,7 +146,7 @@ TabuNeighborhoodExplorer<Move>::UpdateRouteTimetable(std::vector<int> &ret,
     for (unsigned i = 0; i <= route_size; ++i) {
         std::string client_to(this->in.get_depot());
         if (i < route_size)
-            client_to = this->in.OrderVect(r[i]).get_client();
+            client_to = this->in.OrderGroupVect(r[i]).get_client();
         int ready_time = this->in.FindClient(client_to).get_ready_time();
         arrive_time += this->in.FindClient(client_from).get_service_time()
                         + this->in.get_time_dist(client_from, client_to);
@@ -168,13 +168,13 @@ TabuNeighborhoodExplorer<Move>::UpdateRouteTimetable(std::vector<int> &ret,
 }
 
 template <class Move> int
-TabuNeighborhoodExplorer<Move>::ComputeRouteTimeViolation(const RoutePlan &rp,
+TabuNeighborhoodExplorer<Move>::DeltaRouteTimeViolation(const RoutePlan &rp,
                                                           int isnew,
                                                           unsigned r,
                                                           unsigned pos) const {
     int delta = 0;
     for (unsigned i = pos; i < rp[r].size(); ++i) {
-        std::string client = this->in.OrderVect(rp[r][i]).get_client();
+        std::string client = this->in.OrderGroupVect(rp[r][i]).get_client();
         int duetime = this->in.FindClient(client).get_due_time();
         int arrive_time = rp(r, i);
         if (arrive_time > duetime)
@@ -183,7 +183,7 @@ TabuNeighborhoodExplorer<Move>::ComputeRouteTimeViolation(const RoutePlan &rp,
 
     // after move
     for (unsigned i = pos; i < routes[isnew].size(); ++i) {
-        std::string client = this->in.OrderVect(routes[isnew][i]).get_client();
+        std::string client = this->in.OrderGroupVect(routes[isnew][i]).get_client();
         int duetime = this->in.FindClient(client).get_due_time();
         if (timetable[isnew][i] > duetime)
             delta += timetable[isnew][i] - duetime;

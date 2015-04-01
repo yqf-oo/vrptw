@@ -11,7 +11,7 @@
 int DistanceBillingCostComponent::ComputeCost(const Route &r) const {
     int vehicle = r.get_vehicle();
     const KmBilling* cr = static_cast<const KmBilling*>(in.FindBilling(vehicle));
-    return (r.length(in) * cr->get_km_rate());
+    return (r.length() * cr->get_km_rate());
 }
 
 // bt2
@@ -26,7 +26,7 @@ int DistanceLoadBillingCostComponent::ComputeCost(const Route &r) const {
         int v = r.get_vehicle();
         const LoadKmBilling* cr =
                 static_cast<const LoadKmBilling*>(in.FindBilling(v));
-        cost = r.length(in) * cr->get_km_rate();
+        cost = r.length() * cr->get_km_rate();
     }
     return cost;
 }
@@ -38,17 +38,17 @@ DistanceLoadBillingCostComponent::MaxRateLoad(const Route &r) const {
     const LoadKmBilling *cr =
             static_cast<const LoadKmBilling*>(in.FindBilling(vehicle));
     for (unsigned i = 0; i < r.size(); ++i) {
-        std::string client_id = in.OrderVect(r[i]).get_client();
+        std::string client_id = in.OrderGroupVect(r[i]).get_client();
         int rindex = in.IndexRegion(in.FindClient(client_id).get_region());
         if (cr->get_load_cost(rindex) > max_rate)
             max_rate = cr->get_load_cost(rindex);
-        load += in.OrderVect(r[i]).get_demand();
+        load += in.OrderGroupVect(r[i]).get_demand();
     }
     return std::pair<int, int>(max_rate, load);
 }
 
 bool DistanceLoadBillingCostComponent::IsFull(const Route &r) const {
-    int load = r.demand(in);
+    int load = r.demand();
     int vehicle = r.get_vehicle();
     const LoadKmBilling *cr =
             static_cast<const LoadKmBilling*>(in.FindBilling(vehicle));
@@ -64,7 +64,7 @@ int LoadRangeBillingCostComponent::ComputeCost(const Route &r) const {
     const VarLoadBilling *cr =
             static_cast<const VarLoadBilling*>(in.FindBilling(vehicle));
 
-    int load =  r.demand(in);
+    int load =  r.demand();
     unsigned range = FindRange(r, load);
     int max_rate =  MaxRate(r, range);
 
@@ -110,7 +110,7 @@ LoadRangeBillingCostComponent::MaxRate(const Route &r, unsigned range) const {
 
     int max_rate = 0;
     for (unsigned i = 0; i < r.size(); ++i) {
-        std::string client_id = in.OrderVect(r[i]).get_client();
+        std::string client_id = in.OrderGroupVect(r[i]).get_client();
         int rindex = in.IndexRegion(in.FindClient(client_id).get_region());
         if (max_rate < cr->get_load_cost(rindex, range))
             max_rate = cr->get_load_cost(rindex, range);
@@ -133,11 +133,11 @@ LoadFarestClientCostComponent::MaxRateLoad(const Route &r) const {
     const LoadBilling *cr =
             static_cast<const LoadBilling*>(in.FindBilling(vehicle));
     for (unsigned i = 0; i < r.size(); ++i) {
-        std::string client_id = in.OrderVect(r[i]).get_client();
+        std::string client_id = in.OrderGroupVect(r[i]).get_client();
         int rindex = in.IndexRegion(in.FindClient(client_id).get_region());
         if (cr->get_load_cost(rindex) > max_rate)
             max_rate = cr->get_load_cost(rindex);
-        load += in.OrderVect(r[i]).get_demand();
+        load += in.OrderGroupVect(r[i]).get_demand();
     }
     return std::pair<int, int>(max_rate, load);
 }
@@ -149,10 +149,10 @@ int LoadClientDependentCostComponent::ComputeCost(const Route &r) const {
             static_cast<const LoadBilling*>(in.FindBilling(vehicle));
 
     for (unsigned i = 0; i < r.size(); ++i) {
-        std::string client_id = in.OrderVect(r[i]).get_client();
+        std::string client_id = in.OrderGroupVect(r[i]).get_client();
         int rindex = in.IndexRegion(in.FindClient(client_id).get_region());
         int rate = cr->get_load_cost(rindex);
-        cost += in.OrderVect(r[i]).get_demand() * rate;
+        cost += in.OrderGroupVect(r[i]).get_demand() * rate;
     }
 
     return cost;

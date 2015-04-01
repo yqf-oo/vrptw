@@ -6,20 +6,20 @@
 
 class Route {
  public:
-    Route(): day(-1), vehicle(-1) { }
-    Route(int oid, int d, int vi, bool ex):
-        day(d), vehicle(vi), exc_list(ex), orders(1, oid) { }
-    Route(std::vector<int> ov):
-        day(0), vehicle(0), exc_list(true), orders(ov) { }
-    Route(const Route &r): day(r.day), vehicle(r.vehicle),
-                           exc_list(r.exc_list), orders(r.orders) { }
+    Route(int i, bool e, const ProbInput &p):
+        id(i), exc_list(e), orders(0), in(p) { }
+    // Route(std::vector<int> ov):
+    //     day(0), vehicle(0), exc_list(true), orders(ov) { }
+    Route(const Route &r):
+        id(r.id), exc_list(r.exc_list), orders(r.orders), in(r.in) { }
     unsigned size() const { return orders.size(); }
-    int length(const ProbInput&) const;
-    int demand(const ProbInput&) const;
-    int get_day() const { return day; }
-    int get_vehicle() const { return vehicle; }
+    int length() const;
+    int demand() const;
+    int get_day() const { return id / in.get_num_vehicle(); }
+    int get_vehicle() const { return id % in.get_num_vehicle(); }
     bool IsExcList() const { return exc_list; }
-    unsigned get_num_order(const ProbInput&) const;
+    void set_ext_list(bool unschduled) { exc_list = unschduled; }
+    unsigned get_num_order() const;
     void push_back(int order_index) { orders.push_back(order_index); }
     void erase(unsigned pos) { orders.erase(orders.begin() + pos); }
     void insert(unsigned pos, int order) {
@@ -29,15 +29,15 @@ class Route {
     const int& operator[] (int i) const { return orders[i]; }
     int& operator[] (int i) { return orders[i]; }
     Route& operator=(const Route &r) {
-        day = r.day;
-        vehicle = r.vehicle;
+        id = r.id;
         orders = r.orders;
         return *this;
     }
  private:
-    int day, vehicle;
+    int id;
     bool exc_list;
     std::vector<int> orders;
+    const ProbInput &in;
 };
 
 class RoutePlan {
@@ -47,27 +47,27 @@ class RoutePlan {
  public:
     RoutePlan(const ProbInput& pi): in(pi) { Allocate(); }
     RoutePlan(const RoutePlan &rp):
-        in(rp.in), routes(rp.routes), plan(rp.plan), timetable(rp.timetable) { }
+        in(rp.in), routes_(rp.routes_), timetable_(rp.timetable_) { }
     void AddOrder(int , unsigned, unsigned, bool);
-    void AddRoute(const Route &r) { routes.push_back(r); }
+    void AddRoute(const Route &r) { routes_.push_back(r); }
     // void ResizeTimetable(unsigned sz) { timetable.resize(sz); }
     void ResizeRouteTimetable(unsigned i, unsigned sz, int val) {
-        if (i >= timetable.size())
+        if (i >= timetable_.size())
             return;
-        timetable[i].resize(sz, val);
+        timetable_[i].resize(sz, val);
     }
-    unsigned size() const { return routes.size(); }
-    const Route& operator[] (int i) const { return routes[i]; }
-    Route& operator[] (int i) { return routes[i]; }
+    unsigned size() const { return routes_.size(); }
+    unsigned num_routes() const { return routes_.size() - 1; }
+    const Route& operator[] (int i) const { return routes_[i]; }
+    Route& operator[] (int i) { return routes_[i]; }
     // int vd_route(unsigned v, unsigned d) const { return plan[v][d]; }
     // int& vd_route(unsigned v, unsigned d) { return plan[v][d]; }
-    std::vector<int>& routetime(int i) { return timetable[i]; }
-    int operator() (unsigned r, unsigned o) const { return timetable[r][o]; }
-    int& operator() (unsigned r, unsigned o) { return timetable[r][o]; }
+    std::vector<int>& timetable(int i) { return timetable_[i]; }
+    int operator() (unsigned r, unsigned o) const { return timetable_[r][o]; }
+    int& operator() (unsigned r, unsigned o) { return timetable_[r][o]; }
     RoutePlan& operator=(const RoutePlan &rp) {
-        routes = rp.routes;
-        plan = rp.plan;
-        timetable = rp.timetable;
+        routes_ = rp.routes_;
+        timetable_ = rp.timetable_;
         return *this;
     }
     // check whether a route plan is feasible
@@ -76,8 +76,8 @@ class RoutePlan {
  private:
     void Allocate();
     const ProbInput &in;
-    std::vector<Route> routes;
+    std::vector<Route> routes_;
     // std::vector<std::vector<int> > plan;
-    std::vector<std::vector<int> > timetable;
+    std::vector<std::vector<int> > timetable_;
 };
 #endif
