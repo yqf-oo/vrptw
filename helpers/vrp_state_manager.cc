@@ -47,18 +47,20 @@ void VRPStateManager::UpdateTimeTable(RoutePlan &rp) {
             std::string client_to(in.get_depot());
             if (j < route_size)
                 client_to = in.OrderGroupVect(rp[i][j]).get_client();
-            int ready_time = in.FindClient(client_to).get_ready_time();
-            arrive_time += in.FindClient(client_from).get_service_time()
-                           + in.get_time_dist(client_from, client_to);
-            if (arrive_time - stop_time > 45 * 360) {    // driving rests
-                arrive_time += 45 * 60;
-                if (arrive_time < ready_time)
+            if (client_from != client_to) {
+                int ready_time = in.FindClient(client_to).get_ready_time();
+                arrive_time += in.FindClient(client_from).get_service_time()
+                               + in.get_time_dist(client_from, client_to);
+                if (arrive_time - stop_time > 45 * 360) {    // driving rests
+                    arrive_time += 45 * 60;
+                    if (arrive_time < ready_time)
+                        arrive_time = ready_time;
+                    stop_time = arrive_time;
+                } else if (arrive_time < ready_time) {
+                    if (ready_time - arrive_time >= 45 * 60)
+                        stop_time = ready_time;
                     arrive_time = ready_time;
-                stop_time = arrive_time;
-            } else if (arrive_time < ready_time) {
-                if (ready_time - arrive_time >= 45 * 60)
-                    stop_time = ready_time;
-                arrive_time = ready_time;
+                }
             }
             rp(i, j) = arrive_time;
             // timetable[i][j] = arrive_time;
@@ -68,14 +70,20 @@ void VRPStateManager::UpdateTimeTable(RoutePlan &rp) {
 }
 
 int VRPStateManager::CostFunction(const RoutePlan &rp) const {
+    num_order_late_return = 0;
     return (Objective(rp) + Violations(rp));
 }
 
 int VRPStateManager::Objective(const RoutePlan &rp) const {
+    // std::cout << "Date:" << ComputeDateViolationCost(rp, 30)
+    //           << " Time:" << ComputeTimeViolationCost(rp, 10)
+    //           << " Optional:" << ComputeOptOrderCost(rp, 250)
+    //           << " Trans:" << ComputeTranportationCost(rp)
+    //           << std::endl;
     int obj = ComputeDateViolationCost(rp, 30) +
-                   ComputeTimeViolationCost(rp, 10) +
-                   ComputeOptOrderCost(rp, 250) +
-                   ComputeTranportationCost(rp);
+              ComputeTimeViolationCost(rp, 10) +
+              ComputeOptOrderCost(rp, 250) +
+              ComputeTranportationCost(rp);
     return obj;
 }
 
@@ -100,14 +108,36 @@ VRPStateManager::ComputeDateViolationCost(const RoutePlan& rp,
 int
 VRPStateManager::ComputeTimeViolationCost(const RoutePlan &rp,
                                           int weight) const {
-    int cost = 0;
+    int cost = 0, final_day = 86399;
     for (unsigned i = 0; i < rp.num_routes(); ++i) {
-        for (unsigned j = 0; j < rp[i].size(); ++j) {
-            std::string client = in.OrderVect(rp[i][j]).get_client();
-            int duetime = in.FindClient(client).get_due_time();
+        bool over_time = false;
+        int day = -1, prev_arrive_time = in.get_depart_time();
+        for (unsigned j = 0; j <= rp[i].size(); ++j) {
+            int og_size = 1, duetime = in.get_return_time();
+            if (j < rp[i].size()) {
+                const OrderGroup &og = in.OrderGroupVect(rp[i][j]);
+                duetime = in.FindClient(og.get_client()).get_due_time();
+                og_size = og.size();
+            }
             int tt = rp(i, j);  // get arrive time of order j on route i
-            if (tt > duetime)
-                cost += tt - duetime;
+            if (tt < prev_arrive_time) {
+                over_time = true;
+                day++;
+            }
+            if (tt > duetime || over_time) {
+                if (over_time) {    // arrive time past current day
+                    tt += final_day - duetime + day * 86400;
+                    cost += tt * og_size;
+                    if (j == rp[i].size())
+                        num_order_late_return += rp[i].size();
+                } else {
+                    cost += (tt - duetime) * og_size;
+                    // later 1 hour
+                    if (j == rp[i].size() && tt - duetime > 3600)
+                        num_order_late_return += rp[i].size();
+                }
+            }
+            prev_arrive_time = tt;
         }
     }
     return (weight * cost);
@@ -129,7 +159,9 @@ VRPStateManager::ComputeTranportationCost(const RoutePlan &rp) const {
     int cost = 0;
     for (unsigned i = 0; i < rp.num_routes(); ++i) {
         const Billing *cr = in.FindBilling(rp[i].get_vehicle());
-        cost += cr->GetCostComponent().Cost(rp[i]);
+        int route_var_cost = cr->GetCostComponent().Cost(rp[i]);
+        cost += route_var_cost;
+        // cost += cr->GetCostComponent().Cost(rp[i]);
         if (rp[i].size())   // add vehcile fixed cost
             cost += in.VehicleVect(rp[i].get_vehicle()).fixed_cost();
     }
@@ -150,13 +182,13 @@ VRPStateManager::ComputeCapExceededCost(const RoutePlan &rp, int weight) const {
 
 int
 VRPStateManager::ComputeLateReturnCost(const RoutePlan &rp, int weight) const {
-    int cost = 0;
-    int shutdown_time = in.get_return_time() + 3600;  // plus 1 hour
-    for (unsigned i = 0; i < rp.num_routes(); ++i) {
-        for (unsigned j = 0; j < rp[i].size(); ++j) {
-            if (rp(i, j) > shutdown_time)
-                ++cost;
-        }
-    }
+    // int shutdown_time = in.get_return_time() + 3600;  // plus 1 hour
+    // for (unsigned i = 0; i < rp.num_routes(); ++i) {
+    //     for (unsigned j = 0; j <= rp[i].size(); ++j) {
+    //         if (rp(i, j) > shutdown_time)
+    //             ++cost;
+    //     }
+    // }
+    int cost = num_order_late_return;
     return (weight * cost);
 }

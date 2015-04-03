@@ -65,6 +65,7 @@ ProbInput::~ProbInput() {
         delete map_it->second;
         ++map_it;
     }
+    billing_imap.clear();
 }
 
 void ProbInput::ReadDataSection(std::istream &input) {
@@ -117,8 +118,10 @@ void ProbInput::ReadDataSection(std::istream &input) {
     // ORDERS
     input >> tmp >> tmp;
     order_vec.resize(num_order);
-    for (int i = 0; i < num_order; ++i)
+    for (int i = 0; i < num_order; ++i) {
         input >> order_vec[i];
+        order_imap[order_vec[i].get_id()] = i;
+    }
 
 
     // EDGES
@@ -263,6 +266,14 @@ int ProbInput::FindCarrier(const std::string &carrier_id) const {
     if (it != carrier_imap.end())
         return it->second;
     return -1;  // not found
+}
+
+int ProbInput::IndexOrderGroup(const std::string &order_id) const {
+    std::map<std::string, int>::const_iterator it;
+    it = order_imap.find(order_id);
+    if (it != order_imap.end())
+        return order_vec[it->second].get_group();
+    return -1;
 }
 
 int ProbInput::IndexClient(const std::string &client_id) const {

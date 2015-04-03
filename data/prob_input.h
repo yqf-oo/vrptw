@@ -23,6 +23,7 @@ class ProbInput {
     int IndexRegion(const std::string&) const;
     int FindCarrier(const std::string&) const;
     int IndexClient(const std::string&) const;
+    int IndexOrderGroup(const std::string&) const;
     const Client& FindClient(const std::string&) const;
     const Billing* FindBilling(int v) const;
     std::string get_depot() const { return depot_id; }
@@ -89,6 +90,7 @@ class ProbInput {
     // Id maps
     std::map<std::string, int> region_imap;
     std::map<std::string, int> client_imap;
+    std::map<std::string, int> order_imap;
     std::map<std::string, int> carrier_imap;
     std::map<std::string, Billing*> billing_imap;
 

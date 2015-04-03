@@ -3,10 +3,13 @@
 #include <helpers/NeighborhoodExplorer.hh>
 #include <vector>
 #include <string>
+#include <utility>
 #include "data/neighbor.h"
 #include "data/route.h"
 #include "data/prob_input.h"
 #include "helpers/vrp_state_manager.h"
+
+// #define _VRP_DEBUG_
 
 template <class Move>
 class TabuNeighborhoodExplorer:
@@ -21,10 +24,10 @@ public NeighborhoodExplorer<ProbInput, RoutePlan, Move> {
                              VRPStateManager &sm, std::string nm):
         NeighborhoodExplorer<ProbInput, RoutePlan, Move>(in, sm, nm) { }
     void UpdateRouteTimetable(std::vector<int>&, const Route&) const;
-    int DeltaRouteTimeViolation(const RoutePlan&, int, unsigned,
-                                  unsigned) const;
-    mutable std::vector<Route> routes;
-    mutable std::vector<std::vector<int> > timetable;
+    int RouteCostsOnTimeWindow(const Route&, const std::vector<int>&, int*) const;
+    mutable std::vector<Route> routes_;
+    mutable std::vector<std::vector<int> > timetable_;
+    mutable int delta_num_order_late_return;
 };
 
 class InsMoveNeighborhoodExplorer: public TabuNeighborhoodExplorer<InsMove> {
@@ -147,19 +150,21 @@ TabuNeighborhoodExplorer<Move>::UpdateRouteTimetable(std::vector<int> &ret,
         std::string client_to(this->in.get_depot());
         if (i < route_size)
             client_to = this->in.OrderGroupVect(r[i]).get_client();
-        int ready_time = this->in.FindClient(client_to).get_ready_time();
-        arrive_time += this->in.FindClient(client_from).get_service_time()
-                        + this->in.get_time_dist(client_from, client_to);
+        if (client_from != client_to) {
+            int ready_time = this->in.FindClient(client_to).get_ready_time();
+            arrive_time += this->in.FindClient(client_from).get_service_time()
+                            + this->in.get_time_dist(client_from, client_to);
 
-        if (arrive_time - stop_time > 45 * 360) {    // driving rests
-            arrive_time += 45 * 60;
-            if (arrive_time < ready_time)
+            if (arrive_time - stop_time > 45 * 360) {    // driving rests
+                arrive_time += 45 * 60;
+                if (arrive_time < ready_time)
+                    arrive_time = ready_time;
+                stop_time = arrive_time;
+            } else if (arrive_time < ready_time) {
+                if (ready_time - arrive_time >= 45 * 60)
+                    stop_time = ready_time;
                 arrive_time = ready_time;
-            stop_time = arrive_time;
-        } else if (arrive_time < ready_time) {
-            if (ready_time - arrive_time >= 45 * 60)
-                stop_time = ready_time;
-            arrive_time = ready_time;
+            }
         }
         ret.push_back(arrive_time);
         client_from = client_to;
@@ -168,27 +173,56 @@ TabuNeighborhoodExplorer<Move>::UpdateRouteTimetable(std::vector<int> &ret,
 }
 
 template <class Move> int
-TabuNeighborhoodExplorer<Move>::DeltaRouteTimeViolation(const RoutePlan &rp,
-                                                          int isnew,
-                                                          unsigned r,
-                                                          unsigned pos) const {
-    int delta = 0;
-    for (unsigned i = pos; i < rp[r].size(); ++i) {
-        std::string client = this->in.OrderGroupVect(rp[r][i]).get_client();
-        int duetime = this->in.FindClient(client).get_due_time();
-        int arrive_time = rp(r, i);
-        if (arrive_time > duetime)
-            delta -= arrive_time - duetime;
+TabuNeighborhoodExplorer<Move>::RouteCostsOnTimeWindow(const Route &r,
+                                                       const std::vector<int> &time,
+                                                       int *late_return) const {
+    bool over_time = false;
+    int cost = 0, day = -1, final_day = 86399;
+    int prev_arrive_time = this->in.get_depart_time();
+    for (unsigned i = 0; i <= r.size(); ++i) {
+        int og_size = 1, duetime = this->in.get_return_time();
+        if (i < r.size()) {
+            const OrderGroup &og = this->in.OrderGroupVect(r[i]);
+            duetime = this->in.FindClient(og.get_client()).get_due_time();
+            og_size = og.size();
+        }
+        int tt = time[i];  // get arrive time of order j on route i
+        if (tt < prev_arrive_time) {
+            over_time = true;
+            day++;
+        }
+        if (tt > duetime || over_time) {
+            if (over_time) {    // arrive time past current day
+                tt += final_day - duetime + day * 86400;
+                cost += tt * og_size;
+                if (i == r.size())
+                    *late_return += r.size();
+            } else {
+                cost += (tt - duetime) * og_size;
+                // later 1 hour
+                if (i == r.size() && tt - duetime > 3600)
+                    *late_return += r.size();
+            }
+        }
+        prev_arrive_time = tt;
     }
+    return cost;
+    // for (unsigned i = pos; i < r.size(); ++i) {
+    //     std::string client = this->in.OrderGroupVect(r[i]).get_client();
+    //     int duetime = this->in.FindClient(client).get_due_time();
+    //     int arrive_time = rp(r, i);
+    //     if (arrive_time > duetime)
+    //         delta -= arrive_time - duetime;
+    // }
 
-    // after move
-    for (unsigned i = pos; i < routes[isnew].size(); ++i) {
-        std::string client = this->in.OrderGroupVect(routes[isnew][i]).get_client();
-        int duetime = this->in.FindClient(client).get_due_time();
-        if (timetable[isnew][i] > duetime)
-            delta += timetable[isnew][i] - duetime;
-    }
-    return delta;
+    // // after move
+    // for (unsigned i = pos; i < routes_[isnew].size(); ++i) {
+    //     const OrderGroup &og = in.OrderGroupVect(routes_[isnew][i]);
+    //     int duetime = this->in.FindClient(og.get_client()).get_due_time();
+    //     if (timetable_[isnew][i] > duetime)
+    //         delta += timetable_[isnew][i] - duetime;
+    // }
+    // return delta;
 }
 
 #endif

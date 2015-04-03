@@ -52,7 +52,7 @@ bool DistanceLoadBillingCostComponent::IsFull(const Route &r) const {
     int vehicle = r.get_vehicle();
     const LoadKmBilling *cr =
             static_cast<const LoadKmBilling*>(in.FindBilling(vehicle));
-    double full = cr->get_full_load() / 100;
+    double full = cr->get_full_load() / 100.0;
     if (load >= full * in.VehicleVect(vehicle).get_cap())
         return true;
     return false;

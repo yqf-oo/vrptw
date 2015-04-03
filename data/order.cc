@@ -8,6 +8,14 @@ std::istream& operator>>(std::istream &is, Order &o) {
     return is;
 }
 
+std::ostream& operator<<(std::ostream &os, const OrderGroup &og) {
+    os << "Mand:" << og.mandatory << " members: ";
+    for (unsigned i = 0; i < og.size(); ++i) {
+        os << " " << og.members[i];
+    }
+    return os;
+}
+
 OrderGroup& OrderGroup::operator=(const OrderGroup &og) {
     id = og.id;
     id_client = og.id_client;

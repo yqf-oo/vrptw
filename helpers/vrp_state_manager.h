@@ -12,6 +12,7 @@ class VRPStateManager: public StateManager<ProbInput, RoutePlan> {
     VRPStateManager(const ProbInput &pi):
         StateManager<ProbInput, RoutePlan>(pi, "VRPStateManager") { }
     ~VRPStateManager() { }
+    void UpdateTimeTable(RoutePlan&);
     void RandomState(RoutePlan&);
     bool CheckConsistency(const RoutePlan&) const { return true; }
     int CostFunction(const RoutePlan&) const;
@@ -23,13 +24,13 @@ class VRPStateManager: public StateManager<ProbInput, RoutePlan> {
     // std::vector<int>& operator[](unsigned i) { return timetable[i]; }
  private:
     void ResetState(RoutePlan&);
-    void UpdateTimeTable(RoutePlan&);
     int ComputeDateViolationCost(const RoutePlan&, int) const;    // s1
     int ComputeTimeViolationCost(const RoutePlan&, int) const;    // s2
     int ComputeOptOrderCost(const RoutePlan&, int) const;         // s3
     int ComputeTranportationCost(const RoutePlan&) const;         // s4
     int ComputeCapExceededCost(const RoutePlan&, int) const;      // h1
     int ComputeLateReturnCost(const RoutePlan&, int) const;       // h2
+    mutable unsigned num_order_late_return;
 };
 
 #endif

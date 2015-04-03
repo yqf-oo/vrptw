@@ -12,7 +12,7 @@ class Billing {
  public:
     Billing(std::string i, std::string t):
         id(i), type(t) { }
-    virtual ~Billing() { delete cost_component; }
+    virtual ~Billing() { std::cout << "Pass:" << id << std::endl; } //delete cost_component;}
     void SetCostComponent(BillingCostComponent* cc) {
         cost_component = cc;
     }
@@ -44,7 +44,7 @@ class LoadKmBilling: public Billing {
  public:
     LoadKmBilling(std::string i, std::string t):
         Billing(i, t) { }
-    ~LoadKmBilling() { }
+    ~LoadKmBilling() { delete this->cost_component; }
     int get_km_rate() const { return km_rate; }
     int get_full_load() const { return full_load_value; }
     int get_load_cost(unsigned r_index) const {

@@ -39,8 +39,12 @@ class Order {
 };
 
 class OrderGroup : public Order {
+    friend std::ostream& operator<<(std::ostream&, const OrderGroup&);
  public:
-    OrderGroup(const Order &o): Order(o), members() { members.push_back(o.get_id()); }
+    OrderGroup(): Order(), members(0) { }
+    explicit OrderGroup(const Order &o): Order(o), members() {
+        members.push_back(o.get_id());
+    }
     OrderGroup(const OrderGroup &og): Order(og), members(og.members) { }
     unsigned size() const { return members.size(); }
     void insert(const Order&);

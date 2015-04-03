@@ -1,9 +1,9 @@
 #include "data/neighbor.h"
 
 std::ostream& operator<<(std::ostream &os, const InsMove &mv) {
-    os << "(" << mv.order << ", " << mv.old_route << ", "
-       << mv.new_route << ", " << mv.old_pos << ", " << mv.new_pos
-       << ")";
+    os << "order: " << mv.order << ", " << "old: (" << mv.old_route
+       << ", " << mv.old_pos << "), " << "new: (" << mv.new_route
+       << ", " << mv.new_pos << ")";
     return os;
 }
 

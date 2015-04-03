@@ -63,6 +63,7 @@ class RoutePlan {
     // int vd_route(unsigned v, unsigned d) const { return plan[v][d]; }
     // int& vd_route(unsigned v, unsigned d) { return plan[v][d]; }
     std::vector<int>& timetable(int i) { return timetable_[i]; }
+    const std::vector<int>& timetable(int i) const { return timetable_[i]; }
     int operator() (unsigned r, unsigned o) const { return timetable_[r][o]; }
     int& operator() (unsigned r, unsigned o) { return timetable_[r][o]; }
     RoutePlan& operator=(const RoutePlan &rp) {
