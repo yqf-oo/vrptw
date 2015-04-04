@@ -55,7 +55,7 @@ std::ostream& operator<<(std::ostream &os, const RoutePlan &rp) {
         }
         const Vehicle& v = rp.in.VehicleVect(rp[i].get_vehicle());
         os << "\t# " << i << "  " << v.get_id() << "(" << v.get_cap() << ") "
-           << "(" << rp[i].size() << ", " << rp[i].get_num_order() << "):";
+           << rp[i].get_num_order() << ":";
 
         for (unsigned j = 0; j < rp[i].size(); ++j) {
             const OrderGroup &og = rp.in.OrderGroupVect(rp[i][j]);

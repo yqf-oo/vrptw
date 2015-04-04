@@ -88,6 +88,8 @@ int VRPStateManager::Objective(const RoutePlan &rp) const {
 }
 
 int VRPStateManager::Violations(const RoutePlan &rp) const {
+    // std::cout << " Late return:" << ComputeLateReturnCost(rp, 1)
+    //           << std::endl;
     return ComputeCapExceededCost(rp, 1) + ComputeLateReturnCost(rp, 1);
 }
 
@@ -139,6 +141,7 @@ VRPStateManager::ComputeTimeViolationCost(const RoutePlan &rp,
             }
             prev_arrive_time = tt;
         }
+        // std::cout << "Route " << i << ": " << cost - old_cost << std::endl;
     }
     return (weight * cost);
 }
