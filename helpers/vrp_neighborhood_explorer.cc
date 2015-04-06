@@ -146,11 +146,14 @@ InsMoveNeighborhoodExplorer::DeltaObjective(const RoutePlan &rp,
     // int time_delta = DeltaTimeViolationCost(rp, mv, 10);
     // int opt_delta = DeltaOptOrderCost(rp, mv, 250);
     // int trans_delta = DeltaTranportationCost(rp, mv);
+    // std::cout << "delta objective:";
     // std:: cout << date_delta << ", " << time_delta << ", "
     //            << opt_delta << ", " << trans_delta << std::endl;
     // return date_delta + time_delta + opt_delta + trans_delta;
-    return DeltaDateViolationCost(rp, mv, 30) + DeltaTimeViolationCost(rp, mv, 10)
-           + DeltaOptOrderCost(rp, mv, 250) + DeltaTranportationCost(rp, mv);
+    return DeltaDateViolationCost(rp, mv, 30)
+           + DeltaTimeViolationCost(rp, mv, 10)
+           + DeltaOptOrderCost(rp, mv, 250)
+           + DeltaTranportationCost(rp, mv);
 }
 
 int
@@ -158,6 +161,7 @@ InsMoveNeighborhoodExplorer::DeltaViolations(const RoutePlan &rp,
                                              const InsMove &mv) const {
     // int cap_delta = DeltaCapExceededCost(rp, mv, 1);
     // int late_delta = DeltaLateReturnCost(rp, mv, 1);
+    // std::cout << "delta violation:";
     // std::cout << cap_delta << ", " << late_delta << std::endl;
     // return cap_delta + late_delta;
     return DeltaCapExceededCost(rp, mv, 1) + DeltaLateReturnCost(rp, mv, 1);
@@ -166,11 +170,17 @@ InsMoveNeighborhoodExplorer::DeltaViolations(const RoutePlan &rp,
 int
 InsMoveNeighborhoodExplorer::DeltaDateViolationCost(const RoutePlan &rp,
                                         const InsMove &mv, int weight) const {
+    int delta = 0;
     const OrderGroup& o = in.OrderGroupVect(mv.order);
-    unsigned old_day = rp[mv.old_route].get_day();
-    unsigned new_day = rp[mv.new_route].get_day();
-    unsigned d = o.get_demand();
-    int delta = d * (o.IsDayFeasible(old_day) - o.IsDayFeasible(new_day));
+    unsigned og_demand = o.get_demand();
+    if (!rp[mv.old_route].IsExcList()) {
+        unsigned old_day = rp[mv.old_route].get_day();
+        delta -= (1 - o.IsDayFeasible(old_day)) * og_demand;
+    }
+    if (!rp[mv.new_route].IsExcList()) {
+        unsigned new_day = rp[mv.new_route].get_day();
+        delta += (1 - o.IsDayFeasible(new_day)) * og_demand;
+    }
     return (weight * delta);
 }
 
@@ -455,13 +465,20 @@ InterSwapNeighborhoodExplorer::DeltaViolations(const RoutePlan &rp,
 int
 InterSwapNeighborhoodExplorer::DeltaDateViolationCost(const RoutePlan &rp,
                                         const InterSwap &mv, int weight) const {
+    int delta = 0;
     const OrderGroup& ord1 = in.OrderGroupVect(mv.ord1);
     const OrderGroup& ord2 = in.OrderGroupVect(mv.ord2);
     unsigned old_day = rp[mv.route1].get_day();
     unsigned new_day = rp[mv.route2].get_day();
-    unsigned d1 = ord1.get_demand(), d2 = ord2.get_demand();
-    int delta = d1 * (ord1.IsDayFeasible(old_day) - ord1.IsDayFeasible(new_day)) +
-                d2 * (ord2.IsDayFeasible(new_day) - ord2.IsDayFeasible(old_day));
+    int ord1_demand = ord1.get_demand(), ord2_demand = ord2.get_demand();
+    if (!rp[mv.route1].IsExcList()) {
+        delta -= (1 - ord1.IsDayFeasible(old_day)) * ord1_demand;
+        delta += (1 - ord2.IsDayFeasible(old_day)) * ord2_demand;
+    }
+    if (!rp[mv.route2].IsExcList()) {
+        delta -= (1 - ord2.IsDayFeasible(new_day)) * ord2_demand;
+        delta += (1 - ord1.IsDayFeasible(new_day)) * ord1_demand;
+    }
     return (weight * delta);
 }
 

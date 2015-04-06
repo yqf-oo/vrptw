@@ -71,19 +71,19 @@ int main(int argc, char *argv[]) {
                                                                  "TokenRingLocalSearch");
 
     // ts_ins.SetMaxIteration(1000);
-    // ts_ins.AttachObserver(ins_ro);
-    // sls.SetRunner(ts_ins);
-    // sls.Solve();
-    // int best_cost = vrp_sm.CostFunction(sls.GetOutput());
-    // test_file = test_file.substr(0, test_file.size() - 3) + "out";
-    // std::ofstream out_f(test_file.c_str());
-    // out_f << sls.GetOutput() << std::endl;
-    // out_f << best_cost << std::endl;
+    ts_ins.AttachObserver(ins_ro);
+    sls.SetRunner(ts_ins);
+    sls.Solve();
+    int best_cost = vrp_sm.CostFunction(sls.GetOutput());
+    test_file = test_file.substr(0, test_file.size() - 3) + "out";
+    std::ofstream out_f(test_file.c_str());
+    out_f << sls.GetOutput() << std::endl;
+    out_f << "Best cost: " << best_cost << std::endl;
     // // test cost computation
-    RoutePlan test_state(in);
-    test_file = test_file.substr(0, test_file.size() - 3) + "sol";
-    std::fstream state_f(test_file.c_str());
-    state_f >> test_state;
+    // RoutePlan test_state(in);
+    // test_file = test_file.substr(0, test_file.size() - 3) + "sol";
+    // std::fstream state_f(test_file.c_str());
+    // state_f >> test_state;
     // std::cout << test_file << std::endl << test_state << std::endl;
     // vrp_sm.UpdateTimeTable(test_state);
     // std::cout << vrp_sm.CostFunction(test_state) << std::endl;
@@ -95,18 +95,18 @@ int main(int argc, char *argv[]) {
     // }
 
     // test delta cost computation
-    vrp_sm.UpdateTimeTable(test_state);
-    int cost_bef = vrp_sm.CostFunction(test_state);
-    InsMove mv;
-    ins_ne.RandomMove(test_state, mv);
-    int delta = ins_ne.DeltaCostFunction(test_state, mv);
-    ins_ne.MakeMove(test_state, mv);
-    std::ofstream out("test-state");
-    out << test_state;
-    int cost_aft = vrp_sm.CostFunction(test_state);
-    std::cout << cost_bef << ", " << cost_aft << std::endl;
-    std::cout<< mv << std::endl << "ne: " << delta << ", "
-             << cost_aft - cost_bef << std::endl;
+    // vrp_sm.UpdateTimeTable(test_state);
+    // int cost_bef = vrp_sm.CostFunction(test_state);
+    // InsMove mv;
+    // ins_ne.RandomMove(test_state, mv);
+    // int delta = ins_ne.DeltaCostFunction(test_state, mv);
+    // ins_ne.MakeMove(test_state, mv);
+    // std::ofstream out("test-state");
+    // out << test_state;
+    // int cost_aft = vrp_sm.CostFunction(test_state);
+    // std::cout << cost_bef << ", " << cost_aft << std::endl;
+    // std::cout<< mv << std::endl << "ne: " << delta << ", "
+    //          << cost_aft - cost_bef << std::endl;
 
     return 0;
 }

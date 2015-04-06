@@ -16,7 +16,7 @@ void VRPStateManager::RandomState(RoutePlan &rp) {
         std::pair<int, int> date_window = o.get_dw();
         assert(date_window.first >= 1);
         int day = Random::Int(date_window.first - 1, date_window.second - 1);
-        assert(o.IsDayFeasible(day + 1));
+        assert(o.IsDayFeasible(day));
 
         std::vector<int> rvec(0);
         for (int k = 0; k < in.get_num_vehicle(); ++k)
@@ -75,16 +75,22 @@ int VRPStateManager::CostFunction(const RoutePlan &rp) const {
 }
 
 int VRPStateManager::Objective(const RoutePlan &rp) const {
-    // std::cout << "Date:" << ComputeDateViolationCost(rp, 30)
-    //           << " Time:" << ComputeTimeViolationCost(rp, 10)
-    //           << " Optional:" << ComputeOptOrderCost(rp, 250)
-    //           << " Trans:" << ComputeTranportationCost(rp)
-    //           << std::endl;
+    #ifdef _DEBUG_H_
+    int dw_cost = ComputeDateViolationCost(rp, 30);
+    int tw_cost = ComputeTimeViolationCost(rp, 10);
+    int opt_cost = ComputeOptOrderCost(rp, 250);
+    int trans_cost = ComputeTranportationCost(rp);
+    std::cout << "Date:" << dw_cost << " Time:" << tw_cost
+              << " Optional:" << opt_cost << " Trans:" << trans_cost
+              << std::endl;
+    return dw_cost + tw_cost + opt_cost + trans_cost;
+    #else
     int obj = ComputeDateViolationCost(rp, 30) +
               ComputeTimeViolationCost(rp, 10) +
               ComputeOptOrderCost(rp, 250) +
               ComputeTranportationCost(rp);
     return obj;
+    #endif
 }
 
 int VRPStateManager::Violations(const RoutePlan &rp) const {
@@ -100,7 +106,7 @@ VRPStateManager::ComputeDateViolationCost(const RoutePlan& rp,
     for (unsigned i = 0; i < rp.num_routes(); ++i) {
         for (unsigned k = 0; k < rp[i].size(); ++k) {
             const OrderGroup &og = in.OrderGroupVect(rp[i][k]);
-            int day = rp[i].get_day() + 1;
+            int day = rp[i].get_day();
             cost += (1 - og.IsDayFeasible(day)) * og.get_demand();
         }
     }

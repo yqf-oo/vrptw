@@ -7,6 +7,7 @@
 
 class Order {
     friend std::istream& operator>>(std::istream&, Order&);
+
  public:
     Order(): quantity(0), mandatory(0), group(0) { }
     Order(const Order &o):
@@ -23,7 +24,7 @@ class Order {
     std::pair<int, int> get_dw() const { return date_window; }
     bool IsMandatory() const { return mandatory; }
     bool IsDayFeasible(int day) const {
-        return (day >= date_window.first && day <= date_window.second);
+        return (day >= date_window.first-1 && day <= date_window.second-1);
     }
     void set_group(int i) { group = i; }
     int get_group() const { return group; }
