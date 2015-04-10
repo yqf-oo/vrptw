@@ -75,7 +75,7 @@ int VRPStateManager::CostFunction(const RoutePlan &rp) const {
 }
 
 int VRPStateManager::Objective(const RoutePlan &rp) const {
-    #ifdef _DEBUG_H_
+    #ifdef _STATE_DEBUG_H_
     int dw_cost = ComputeDateViolationCost(rp, 30);
     int tw_cost = ComputeTimeViolationCost(rp, 10);
     int opt_cost = ComputeOptOrderCost(rp, 250);
@@ -94,9 +94,15 @@ int VRPStateManager::Objective(const RoutePlan &rp) const {
 }
 
 int VRPStateManager::Violations(const RoutePlan &rp) const {
-    // std::cout << " Late return:" << ComputeLateReturnCost(rp, 1)
-    //           << std::endl;
+    #ifdef _STATE_DEBUG_H_
+    int cap_cost = ComputeCapExceededCost(rp, 1);
+    int late_cost = ComputeLateReturnCost(rp, 1);
+    std::cout << "Cap vio: " << cap_cost << ", " << "Late vio: "
+              << late_cost << std::endl;
+    return cap_cost + late_cost;
+    #else
     return ComputeCapExceededCost(rp, 1) + ComputeLateReturnCost(rp, 1);
+    #endif
 }
 
 int

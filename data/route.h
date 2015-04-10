@@ -1,5 +1,5 @@
-#ifndef _ROUTE_H
-#define _ROUTE_H
+#ifndef _ROUTE_H_
+#define _ROUTE_H_
 #include <iostream>
 #include <vector>
 #include "data/prob_input.h"

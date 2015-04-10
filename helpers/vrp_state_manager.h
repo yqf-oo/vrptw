@@ -7,9 +7,11 @@
 #include "data/route.h"
 #include "data/prob_input.h"
 
+// #define _STATE_DEBUG_H_
+
 class VRPStateManager: public StateManager<ProbInput, RoutePlan> {
  public:
-    VRPStateManager(const ProbInput &pi):
+    explicit VRPStateManager(const ProbInput &pi):
         StateManager<ProbInput, RoutePlan>(pi, "VRPStateManager") { }
     ~VRPStateManager() { }
     void UpdateTimeTable(RoutePlan&);

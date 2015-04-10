@@ -9,7 +9,8 @@
 #include "data/prob_input.h"
 #include "helpers/vrp_state_manager.h"
 
-// #define _VRP_DEBUG_
+// #define _NE_DEBUG_H_
+#define _DEBUG_H_
 
 template <class Move>
 class TabuNeighborhoodExplorer:
@@ -179,6 +180,7 @@ TabuNeighborhoodExplorer<Move>::RouteCostsOnTimeWindow(const Route &r,
     bool over_time = false;
     int cost = 0, day = -1, final_day = 86399;
     int prev_arrive_time = this->in.get_depart_time();
+    *late_return = 0;
     for (unsigned i = 0; i <= r.size(); ++i) {
         int og_size = 1, duetime = this->in.get_return_time();
         if (i < r.size()) {

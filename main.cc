@@ -14,6 +14,8 @@
 #include "helpers/vrp_tabu_list_manager.h"
 #include "helpers/vrp_output_manager.h"
 #include "helpers/vrp_tabu_search.h"
+#include "solvers/vrp_token_ring_search.h"
+#include "solvers/vrp_token_ring_observer.h"
 
 int main(int argc, char *argv[]) {
     CLParser cl(argc, argv);
@@ -44,40 +46,71 @@ int main(int argc, char *argv[]) {
     // testers
     Tester<ProbInput, ProbOutput, RoutePlan> tester(in, vrp_sm, vrp_om);
     // observer
-    std::ofstream log_f("vrp.log"), tabu_f("vrp.tabu");
-    RunnerObserver<ProbInput, RoutePlan, InsMove> ins_ro(2, 2, log_f, log_f);
+    std::ofstream ins_log("./logs/ins.log");
+    std::ofstream ins_tabu("./logs/ins.tabu");
+    std::ofstream inter_log("./logs/inter.log");
+    std::ofstream inter_tabu("./logs/inter.tabu");
+    std::ofstream intra_log("./logs/intra.log");
+    std::ofstream intra_tabu("./logs/intra.tabu");
+    RunnerObserver<ProbInput, RoutePlan, InsMove> ins_ro(2, 2,
+                                                         ins_log,
+                                                         ins_log);
+    RunnerObserver<ProbInput, RoutePlan, InterSwap> inter_ro(2, 2,
+                                                             inter_log,
+                                                             inter_log);
+    RunnerObserver<ProbInput, RoutePlan, IntraSwap> intra_ro(2, 2,
+                                                             intra_log,
+                                                             intra_log);
     // runners
     InsMoveTabuSearch ts_ins(in, vrp_sm,
                              ins_ne, ins_tlm,
                              "InsMoveTabuSearch",
-                             cl, tester, tabu_f);
-    // TabuSearch<ProbInput, RoutePlan, InsMove> ts_ins(in, vrp_sm, ins_ne, ins_tlm,
+                             cl, tester, ins_tabu);
+    InterSwapTabuSearch ts_intersw(in, vrp_sm,
+                             intersw_ne, intersw_tlm,
+                             "InterSwapTabuSearch",
+                             cl, tester, inter_tabu);
+    IntraSwapTabuSearch ts_intrasw(in, vrp_sm,
+                             intrasw_ne, intrasw_tlm,
+                             "IntraSwapTabuSearch",
+                             cl, tester, intra_tabu);
+    // TabuSearch<ProbInput, RoutePlan, InsMove> ts_ins(in, vrp_sm,
+    //                                                  ins_ne, ins_tlm,
     //                                                  "InsMoveTabuSearch",
     //                                                  cl, tester);
     // TabuSearch<ProbInput, RoutePlan, InterSwap> ts_intersw(in, vrp_sm,
     //                                                        intersw_ne,
     //                                                        intersw_tlm,
-    //                                                         "InterSwapTabuSearch",
+    //                                                        "InterSwapTS",
     //                                                         cl, tester);
-    // TabuSearch<ProbInput, RoutePlan, IntraSwap> ts_intrasw(in, vrp_sm, intrasw_ne,
-    //                                                    intrasw_tlm,
-    //                                                    "IntraSwapTabuSearch",
-    //                                                    cl, tester);
+    // TabuSearch<ProbInput, RoutePlan, IntraSwap> ts_intrasw(in, vrp_sm,
+    //                                                        intrasw_ne,
+    //                                                        intrasw_tlm,
+    //                                                        "IntraSwapTS",
+    //                                                        cl, tester);
 
     // solvers
     SimpleLocalSearch<ProbInput, ProbOutput, RoutePlan> sls(in, vrp_sm, vrp_om,
-                                                            "InsSimpleLocalSearch");
-    GeneralizedLocalSearch<ProbInput, ProbOutput, RoutePlan> gls(in, vrp_sm, vrp_om,
-                                                                 "TokenRingLocalSearch");
+                                                            "SimLocalSearch");
+    TokenRingSearch token_ring_solver(in, vrp_sm, vrp_om, "VRPTokenRing", cl);
+    std::ofstream token_ring_f("./logs/token_ring.log");
+    TokenRingObserver tr_observer(token_ring_f);
 
     // ts_ins.SetMaxIteration(1000);
-    ts_ins.AttachObserver(ins_ro);
-    sls.SetRunner(ts_ins);
-    sls.Solve();
-    int best_cost = vrp_sm.CostFunction(sls.GetOutput());
+    // ts_intrasw.AttachObserver(intra_ro);
+    // sls.SetRunner(ts_intrasw);
+    // sls.Solve();
+
+    token_ring_solver.AttachObserver(tr_observer);
+    token_ring_solver.AddRunner(ts_ins);
+    token_ring_solver.AddRunner(ts_intersw);
+    token_ring_solver.AddRunner(ts_intrasw);
+    token_ring_solver.Solve();
+
+    int best_cost = vrp_sm.CostFunction(token_ring_solver.GetOutput());
     test_file = test_file.substr(0, test_file.size() - 3) + "out";
     std::ofstream out_f(test_file.c_str());
-    out_f << sls.GetOutput() << std::endl;
+    out_f << token_ring_solver.GetOutput() << std::endl;
     out_f << "Best cost: " << best_cost << std::endl;
     // // test cost computation
     // RoutePlan test_state(in);
@@ -94,18 +127,16 @@ int main(int argc, char *argv[]) {
     //     std::cout << std::endl;
     // }
 
-    // test delta cost computation
+    // // test delta cost computation
     // vrp_sm.UpdateTimeTable(test_state);
-    // int cost_bef = vrp_sm.CostFunction(test_state);
-    // InsMove mv;
-    // ins_ne.RandomMove(test_state, mv);
-    // int delta = ins_ne.DeltaCostFunction(test_state, mv);
-    // ins_ne.MakeMove(test_state, mv);
+    // std::cout << "Move: " << mv << std::endl;
+    // int delta = intrasw_ne.DeltaCostFunction(test_state, mv);
+    // intrasw_ne.MakeMove(test_state, mv);
     // std::ofstream out("test-state");
     // out << test_state;
     // int cost_aft = vrp_sm.CostFunction(test_state);
     // std::cout << cost_bef << ", " << cost_aft << std::endl;
-    // std::cout<< mv << std::endl << "ne: " << delta << ", "
+    // std::cout<< "ne: " << delta << ", "
     //          << cost_aft - cost_bef << std::endl;
 
     return 0;

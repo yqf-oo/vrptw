@@ -19,7 +19,7 @@ bool InsMove::operator!=(const InsMove &m) const {
 
 std::ostream& operator<<(std::ostream &os, const InterSwap &mv) {
     os << "(" << mv.ord1 << ", " << mv.ord2 << ", "
-       << mv.route1 << ", " << mv.route2 << ", " << mv.pos1
+       << mv.route1 << ", " << mv.pos1 << ", " << mv.route2
        << ", " << mv.pos2 << ")";
     return os;
 }
