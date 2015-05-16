@@ -8,14 +8,17 @@
 #include "data/prob_input.h"
 
 // #define _STATE_DEBUG_H_
+#define _INIT_H_
 
 class VRPStateManager: public StateManager<ProbInput, RoutePlan> {
  public:
     explicit VRPStateManager(const ProbInput &pi):
-        StateManager<ProbInput, RoutePlan>(pi, "VRPStateManager") { }
+        StateManager<ProbInput, RoutePlan>(pi, "VRPStateManager"),
+        num_order_late_return(0), cap_vio_cost(0) { }
     ~VRPStateManager() { }
     void UpdateTimeTable(RoutePlan&);
     void RandomState(RoutePlan&);
+    int SampleState(RoutePlan&, unsigned);
     bool CheckConsistency(const RoutePlan&) const { return true; }
     int CostFunction(const RoutePlan&) const;
     int Objective(const RoutePlan&) const;
@@ -32,7 +35,8 @@ class VRPStateManager: public StateManager<ProbInput, RoutePlan> {
     int ComputeTranportationCost(const RoutePlan&) const;         // s4
     int ComputeCapExceededCost(const RoutePlan&, int) const;      // h1
     int ComputeLateReturnCost(const RoutePlan&, int) const;       // h2
-    mutable unsigned num_order_late_return;
+    mutable int num_order_late_return;
+    mutable int cap_vio_cost;
 };
 
 #endif

@@ -73,8 +73,9 @@ int LoadRangeBillingCostComponent::ComputeCost(const Route &r) const {
         // to be sure that the cost function is monotonous descreasing
         int threshold_cost =  MaxRate(r, range-1) * cr->get_level(range-1);
 
-        int threshold_qty = static_cast<int>
-                    (floor(static_cast<double>(threshold_cost/max_rate)));
+        // std::cout << range << ", " << max_rate << std::endl;
+        int threshold_qty = static_cast<int>(floor(
+                            static_cast<double>(threshold_cost)/max_rate));
         if (load <= threshold_qty)
             cost = threshold_cost;
         else
@@ -93,10 +94,10 @@ LoadRangeBillingCostComponent::FindRange(const Route &r, int load) const {
         static_cast<const VarLoadBilling*>(in.FindBilling(vehicle));
 
     unsigned range = 0, num_level = cr->get_num_range();
-    if (load > cr->get_level(num_level - 1)) {
-        range = num_level;
+    if (load > cr->get_level(num_level - 2)) {
+        range = num_level - 1;
     } else {
-        while (range < num_level-1 && load > cr->get_level(range))
+        while (range < num_level-2 && load > cr->get_level(range))
             ++range;
     }
     return range;

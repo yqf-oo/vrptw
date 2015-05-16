@@ -27,6 +27,11 @@ bool InsMoveNeighborhoodExplorer::FeasibleMove(const RoutePlan &rp,
     if (rp[mv.new_route].IsExcList())
         if (in.OrderGroupVect(mv.order).IsMandatory())
             return false;
+    int vehicle = rp[mv.new_route].get_vehicle();
+    unsigned vehicle_cap = in.VehicleVect(vehicle).get_cap();
+    unsigned order_demand = in.OrderGroupVect(mv.order).get_demand();
+    if (order_demand + rp[mv.new_route].demand() > vehicle_cap)
+        return false;
     return true;
 }
 
@@ -76,7 +81,7 @@ bool InsMoveNeighborhoodExplorer::AnyNextMove(const RoutePlan &rp,
     unsigned old_route_size = rp[mv.old_route].size();
     unsigned new_route_size = rp[mv.new_route].size();
     #ifdef _DEBUG_H_
-    std::fstream f("move.log", std::ios::app);
+    std::fstream f("./logs/move.log", std::ios::app);
     f << "-- " << "size:" << new_route_size << " " << mv << " --" << std::endl;
     #endif
     if (new_route_size && mv.new_pos < new_route_size) {
@@ -118,7 +123,7 @@ InsMoveNeighborhoodExplorer::DeltaCostFunction(const RoutePlan &rp,
                                                const InsMove &mv) const {
     // ugly reduntant data
     #ifdef _DEBUG_H_
-    std::fstream f("error.log", std::ios::app);
+    std::fstream f("./logs/error.log", std::ios::app);
     f << in.OrderGroupVect(mv.order) << std::endl;
     f << "-- " << std::endl << rp << std::endl << mv << std::endl
       << "-- " << std::endl;
@@ -301,6 +306,7 @@ InsMoveNeighborhoodExplorer::DeltaCapExceededCost(const RoutePlan &rp,
         else if (route_demand + order_demand > vehicle_cap)
             delta += route_demand + order_demand - vehicle_cap;
     }
+    delta_cap = delta;
     return (weight * delta);
 }
 
@@ -357,6 +363,17 @@ bool InterSwapNeighborhoodExplorer::FeasibleMove(const RoutePlan &rp,
         return false;
     if (mv.route1 == mv.route2)
         return false;
+
+    int old_veh = rp[mv.route1].get_vehicle();
+    int new_veh = rp[mv.route2].get_vehicle();
+    unsigned old_cap = in.VehicleVect(old_veh).get_cap();
+    unsigned new_cap = in.VehicleVect(new_veh).get_cap();
+    unsigned d1 = in.OrderGroupVect(mv.ord1).get_demand();
+    unsigned d2 = in.OrderGroupVect(mv.ord2).get_demand();
+    if (d1 + rp[mv.route2].demand() > new_cap)
+        return false;
+    if (d2 + rp[mv.route1].demand() > old_cap)
+        return false;
     return true;
 }
 
@@ -379,18 +396,21 @@ void InterSwapNeighborhoodExplorer::AnyRandomMove(const RoutePlan &rp,
 void InterSwapNeighborhoodExplorer::FirstMove(const RoutePlan &rp,
                                             InterSwap &mv) const {
     // assert(rp.size() > 1);
-    int cnt = 0;
     mv.route1 = mv.route2 = 0;
     for (unsigned i = 0; i < rp.num_routes(); ++i) {
-        if (rp[i].size())
-            cnt++;
-        if (cnt == 1) {
+        if (rp[i].size()) {
             mv.route1 = i;
-        } else if (cnt == 2) {
+            break;
+        }
+    }
+    for (unsigned i = mv.route1 + 1; i < rp.num_routes(); ++i) {
+        if (rp[i].size()) {
             mv.route2 = i;
             break;
         }
     }
+    if (!rp[mv.route1].size() || !rp[mv.route2].size())
+        std::cout << "route: " << mv.route1 << ", " << mv.route2 << std::endl;
     assert(rp[mv.route1].size() > 0 && rp[mv.route2].size() > 0);
     mv.pos1 = 0;
     mv.ord1 = rp[mv.route1][mv.pos1];
@@ -413,7 +433,8 @@ bool InterSwapNeighborhoodExplorer::AnyNextMove(const RoutePlan &rp,
     unsigned route2_size = rp[mv.route2].size();
     #ifdef _DEBUG_H_
     std::fstream f("./logs/move.log", std::ios::app);
-    f << "-- " << "size:" << route1_size << " " << mv << " --" << std::endl;
+    f << "-- " << "size:" << route1_size << ", " << route2_size
+      << " " << mv << " --" << std::endl;
     #endif
     if (route2_size && mv.pos2 < route2_size - 1) {
         mv.pos2++;
@@ -726,7 +747,7 @@ bool IntraSwapNeighborhoodExplorer::NextMove(const RoutePlan &rp,
 bool IntraSwapNeighborhoodExplorer::AnyNextMove(const RoutePlan &rp,
                                               IntraSwap &mv) const {
     #ifdef _DEBUG_H_
-    std::fstream f("move.log", std::ios::app);
+    std::fstream f("./logs/move.log", std::ios::app);
     f << "-- " << mv << " --" << std::endl;
     #endif
     unsigned route_size = rp[mv.route].size();

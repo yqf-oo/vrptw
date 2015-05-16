@@ -1,5 +1,6 @@
 #include <runners/TabuSearch.hh>
 #include <observers/RunnerObserver.hh>
+#include <observers/GeneralizedLocalSearchObserver.hh>
 #include <solvers/SimpleLocalSearch.hh>
 #include <solvers/GeneralizedLocalSearch.hh>
 #include <testers/Tester.hh>
@@ -20,7 +21,13 @@
 int main(int argc, char *argv[]) {
     CLParser cl(argc, argv);
     ValArgument<std::string> arg_input_file("file", "f", true, cl);
+    // ValArgument<int> max_rounds("mr", "mr", true, cl);
+    // ValArgument<int> max_idle_rounds("mir", "mir", true, cl);
+    // ValArgument<int> max_idle_iteration("mii", "mii", true, cl);
     cl.MatchArgument(arg_input_file);
+    // cl.MatchArgument(max_rounds);
+    // cl.MatchArgument(max_idle_rounds);
+    // cl.MatchArgument(max_idle_iteration);
     // test instance file input
     std::string test_dir = "./test-cases/";
     std::string test_file = test_dir + arg_input_file.GetValue();
@@ -74,6 +81,7 @@ int main(int argc, char *argv[]) {
                              intrasw_ne, intrasw_tlm,
                              "IntraSwapTabuSearch",
                              cl, tester, intra_tabu);
+    // set arguments
     // TabuSearch<ProbInput, RoutePlan, InsMove> ts_ins(in, vrp_sm,
     //                                                  ins_ne, ins_tlm,
     //                                                  "InsMoveTabuSearch",
@@ -92,26 +100,71 @@ int main(int argc, char *argv[]) {
     // solvers
     SimpleLocalSearch<ProbInput, ProbOutput, RoutePlan> sls(in, vrp_sm, vrp_om,
                                                             "SimLocalSearch");
-    TokenRingSearch token_ring_solver(in, vrp_sm, vrp_om, "VRPTokenRing", cl);
+    TokenRingSearch token_ring_solver(in, vrp_sm, vrp_om, "TokenRing", cl);
     std::ofstream token_ring_f("./logs/token_ring.log");
     TokenRingObserver tr_observer(token_ring_f);
 
-    // ts_ins.SetMaxIteration(1000);
-    // ts_intrasw.AttachObserver(intra_ro);
-    // sls.SetRunner(ts_intrasw);
+    // // Simple Local Search
+    // ts_ins.AttachObserver(ins_ro);
+    // sls.SetInitTrials(1);
+    // sls.SetRunner(ts_ins);
     // sls.Solve();
 
+    // Token Ring Search
+    int max_iteration = 1000;
+    ts_ins.SetMaxIteration(max_iteration);
+    ts_intersw.SetMaxIteration(max_iteration);
+    ts_intrasw.SetMaxIteration(max_iteration);
     token_ring_solver.AttachObserver(tr_observer);
+    ts_ins.AttachObserver(ins_ro);
+    ts_intersw.AttachObserver(inter_ro);
+    ts_intrasw.AttachObserver(intra_ro);
+    token_ring_solver.SetInitTrials(2);
     token_ring_solver.AddRunner(ts_ins);
     token_ring_solver.AddRunner(ts_intersw);
     token_ring_solver.AddRunner(ts_intrasw);
     token_ring_solver.Solve();
 
+
+    // // General Local Search
+    // GeneralizedLocalSearch<ProbInput, ProbOutput, RoutePlan> gls(in, vrp_sm,
+    //                                                              vrp_om,
+    //                                                              "TokenRing",
+    //                                                              cl);
+    // GeneralizedLocalSearchObserver<ProbInput, ProbOutput, RoutePlan> gls_ob(2, 2,
+    //                                                                         token_ring_f,
+    //                                                                         token_ring_f);
+    // gls.AttachObserver(gls_ob);
+    // gls.AddRunner(ts_ins);
+    // gls.AddRunner(ts_intersw);
+    // gls.AddRunner(ts_intrasw);
+    // gls.GeneralSolve();
+
+    // // // Move Test
+    // RoutePlan test_state(in);
+    // test_file = test_file.substr(0, test_file.size() - 3) + "sol";
+    // std::ifstream state_f(test_file.c_str());
+    // state_f >> test_state;
+    // vrp_sm.UpdateTimeTable(test_state);
+    // std::cout << vrp_sm.CostFunction(test_state) << std::endl;
+    // std::ofstream state_out_f("./logs/state.log");
+    // state_out_f << test_state << std::endl;
+    // IntraSwap mv;
+    // intrasw_ne.FirstMove(test_state, mv);
+    // state_out_f << mv << std::endl;
+    // while (intrasw_ne.NextMove(test_state, mv))
+    //     state_out_f << mv << std::endl;
+
+    // Output Best State
+    // for (int i = 0; i < 20; ++i) {
+    //     sls.Solve();
     int best_cost = vrp_sm.CostFunction(token_ring_solver.GetOutput());
     test_file = test_file.substr(0, test_file.size() - 3) + "out";
     std::ofstream out_f(test_file.c_str());
     out_f << token_ring_solver.GetOutput() << std::endl;
     out_f << "Best cost: " << best_cost << std::endl;
+    // }
+
     // // test cost computation
     // RoutePlan test_state(in);
     // test_file = test_file.substr(0, test_file.size() - 3) + "sol";

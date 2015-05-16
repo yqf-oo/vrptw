@@ -1,5 +1,6 @@
 #include "helpers/vrp_state_manager.h"
 #include <utils/Random.hh>
+#include <fstream>
 #include <vector>
 #include <string>
 #include <utility>
@@ -23,7 +24,12 @@ void VRPStateManager::RandomState(RoutePlan &rp) {
             if (in.IsReachable(k, i))
                 rvec.push_back(k);
         assert(rvec.size() >= 1);
-        int idx = Random::Int(0, rvec.size() - 1);
+        int idx, cap, route_index;
+        do {
+            idx = Random::Int(0, rvec.size() - 1);
+            cap = in.VehicleVect(idx).get_cap();
+            route_index = day * in.get_num_vehicle() + idx;
+        }while(rp[route_index].demand() + o.get_demand() > cap);
         rp.AddOrder(i, day, rvec[idx], false);
     }
     UpdateTimeTable(rp);
@@ -32,6 +38,15 @@ void VRPStateManager::RandomState(RoutePlan &rp) {
 void VRPStateManager::ResetState(RoutePlan &rp) {
     for (unsigned i = 0; i < rp.size(); ++i)
         rp[i].clear();
+}
+
+int VRPStateManager::SampleState(RoutePlan &rp, unsigned t) {
+    int cost = StateManager<ProbInput, RoutePlan>::SampleState(rp, t);
+    #ifdef _INIT_H_
+    std::ofstream out_f("./logs/init.log");
+    out_f << rp << std::endl;
+    #endif
+    return cost;
 }
 
 void VRPStateManager::UpdateTimeTable(RoutePlan &rp) {
@@ -179,6 +194,10 @@ VRPStateManager::ComputeTranportationCost(const RoutePlan &rp) const {
         // cost += cr->GetCostComponent().Cost(rp[i]);
         if (rp[i].size())   // add vehcile fixed cost
             cost += in.VehicleVect(rp[i].get_vehicle()).fixed_cost();
+        #ifdef _STATE_DEBUG_H_
+        std::cout << "Route " << i << ", " << "var cost: " << route_var_cost
+                  << std::endl;
+        #endif
     }
     return cost;
 }
@@ -192,6 +211,7 @@ VRPStateManager::ComputeCapExceededCost(const RoutePlan &rp, int weight) const {
         if (route_demand > vehicle_cap)
             cost += route_demand - vehicle_cap;
     }
+    cap_vio_cost = cost;
     return (weight * cost);
 }
 

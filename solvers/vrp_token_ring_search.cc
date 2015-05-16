@@ -1,5 +1,6 @@
 #include "solvers/vrp_token_ring_search.h"
 #include <utils/Types.hh>
+#include <iostream>
 #include <stdexcept>
 #include "solvers/vrp_token_ring_observer.h"
 
@@ -97,13 +98,22 @@ void TokenRingSearch::Run() {
     chrono.Start();
     this->best_state = this->current_state;
     this->best_state_cost = this->current_state_cost;
+    // std::cout << this->timeout << ", " << this->timeout_set
+    //           << ", " << this->current_timeout << std::endl;
+    std::ofstream fout("./token_ring.debug");
     do {
         ++round_;
         ++idle_rounds_;
         for (RunnerType *p_r : p_runners) {
+            fout << "-- " << "round: " << round_ << ", "
+                      << current_runner_  << std::endl;
+            fout << this->current_state << std::endl;
             p_r->SetState(this->current_state, this->current_state_cost);
             if (observer != NULL) observer->NotifyRunnerStart(*this);
+            fout << "Timeout before: " << this->current_timeout;
             timeout_expired = this->LetGo(*p_r);
+            fout << "  after: " <<  this->current_timeout << std::endl;
+            fout << "--" << std::endl;
             if (observer != NULL) observer->NotifyRunnerStop(*this);
             this->current_state = p_runners[current_runner_]->GetState();
             this->current_state_cost = p_r->GetStateCost();
@@ -117,8 +127,8 @@ void TokenRingSearch::Run() {
             if (observer != NULL) observer->NotifyRound(*this);
             if (lower_bound_reached || timeout_expired) break;
         }
-    }while(round_ < max_rounds_ || idle_rounds_ < max_idle_rounds_
-           || lower_bound_reached || timeout_expired);
+    }while(round_ < max_rounds_ && idle_rounds_ < max_idle_rounds_
+           && !lower_bound_reached && !timeout_expired);
     chrono.Stop();
 }
 

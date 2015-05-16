@@ -1,6 +1,8 @@
 #ifndef _VRP_NEIGHBORHOOD_EXPLORER_H_
 #define _VRP_NEIGHBORHOOD_EXPLORER_H_
 #include <helpers/NeighborhoodExplorer.hh>
+#include <helpers/TabuListManager.hh>
+#include <fstream>
 #include <vector>
 #include <string>
 #include <utility>
@@ -10,7 +12,7 @@
 #include "helpers/vrp_state_manager.h"
 
 // #define _NE_DEBUG_H_
-#define _DEBUG_H_
+// #define _DEBUG_H_
 
 template <class Move>
 class TabuNeighborhoodExplorer:
@@ -20,6 +22,13 @@ public NeighborhoodExplorer<ProbInput, RoutePlan, Move> {
     virtual void FirstMove(const RoutePlan&, Move&) const = 0;
     virtual bool NextMove(const RoutePlan&, Move&) const = 0;
     virtual void MakeMove(RoutePlan&, const Move&) const = 0;
+    int DeltaCostFunction(const RoutePlan&, const Move&) const = 0;
+    int DeltaObjective(const RoutePlan&, const Move&) const = 0;
+    int DeltaViolations(const RoutePlan&, const Move &) const = 0;
+    virtual int BestMove(const RoutePlan&, Move&,
+                         TabuListManager<RoutePlan, Move>&) const;
+    int get_delta_cap() const { return delta_cap; }
+    int get_delta_late_return() const { return delta_num_order_late_return; }
  protected:
     TabuNeighborhoodExplorer(const ProbInput &in,
                              VRPStateManager &sm, std::string nm):
@@ -29,6 +38,7 @@ public NeighborhoodExplorer<ProbInput, RoutePlan, Move> {
     mutable std::vector<Route> routes_;
     mutable std::vector<std::vector<int> > timetable_;
     mutable int delta_num_order_late_return;
+    mutable int delta_cap;
 };
 
 class InsMoveNeighborhoodExplorer: public TabuNeighborhoodExplorer<InsMove> {
@@ -225,6 +235,76 @@ TabuNeighborhoodExplorer<Move>::RouteCostsOnTimeWindow(const Route &r,
     //         delta += timetable_[isnew][i] - duetime;
     // }
     // return delta;
+}
+
+template <class Move>
+int TabuNeighborhoodExplorer<Move>::BestMove(const RoutePlan &st, Move &mv,
+                                             TabuListManager<RoutePlan, Move> &pm) const {
+    // get the best non-prohibited move, 
+    // but if all moves are prohibited, then get the best one among them
+    // number of moves found with the same best value
+    unsigned int number_of_bests = 1;
+    FirstMove(st, mv);
+    int mv_cost = DeltaCostFunction(st, mv);
+    Move best_move = mv;
+    int best_delta = mv_cost;
+    bool all_moves_prohibited = pm.ProhibitedMove(st, mv, mv_cost);
+
+    static unsigned int i1 = 0, i2 = 0;
+
+    while (NextMove(st, mv) && !this->ExternalTerminationRequest()) {
+        mv_cost = DeltaCostFunction(st, mv);
+        // int cap_cost = this->sm.get_cap_vio_cost() + get_delta_cap();
+        // int late_return_cost = this->sm.get_late_cost()
+        //                        + get_delta_late_return();
+        // if (cap_cost || late_return_cost)
+        //     continue;
+        std::ofstream out_f("make.move");
+        out_f << "Test move" << mv << std::endl;
+        if (LessThan(mv_cost, best_delta)) {
+            if (!pm.ProhibitedMove(st, mv, mv_cost)) {
+                best_move = mv;
+                best_delta = mv_cost;
+                number_of_bests = 1;
+                all_moves_prohibited = false;
+            } else if (all_moves_prohibited) {
+                best_move = mv;
+                best_delta = mv_cost;
+                number_of_bests = 1;
+            }
+        } else if (EqualTo(mv_cost, best_delta)) {
+            if (!pm.ProhibitedMove(st, mv, mv_cost)) {
+                if (all_moves_prohibited) {
+                    best_move = mv;
+                    number_of_bests = 1;
+                    all_moves_prohibited = false;
+                } else {
+                    if (Random::Int(0,number_of_bests) == 0) // accept the move with probability 1 / (1 + number_of_bests)
+                        best_move = mv;
+                    number_of_bests++;
+                }
+            } else if (all_moves_prohibited) {
+                if (Random::Int(0,number_of_bests) == 0) // accept the move with probability 1 / (1 + number_of_bests)
+                    best_move = mv;
+                number_of_bests++;
+            }
+        }
+        else // mv_cost is greater than best_delta
+            if (all_moves_prohibited && !pm.ProhibitedMove(st, mv, mv_cost))
+            {
+                best_move = mv;
+                best_delta = mv_cost;
+                number_of_bests = 1;
+                all_moves_prohibited = false;
+            }
+    }
+
+    if (all_moves_prohibited)
+        i1++;
+    i2++;
+    //std::cerr << (float)i1/i2 << ' ' << best_move << " ";
+    mv = best_move;
+    return best_delta;
 }
 
 #endif
