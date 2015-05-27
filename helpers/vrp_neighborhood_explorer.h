@@ -259,8 +259,8 @@ int TabuNeighborhoodExplorer<Move>::BestMove(const RoutePlan &st, Move &mv,
         //                        + get_delta_late_return();
         // if (cap_cost || late_return_cost)
         //     continue;
-        std::ofstream out_f("make.move");
-        out_f << "Test move" << mv << std::endl;
+		if (get_delta_late_return() > 0)
+			continue;
         if (LessThan(mv_cost, best_delta)) {
             if (!pm.ProhibitedMove(st, mv, mv_cost)) {
                 best_move = mv;

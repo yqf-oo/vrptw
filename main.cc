@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
     // cl.MatchArgument(max_idle_iteration);
     // test instance file input
     std::string test_dir = "./test-cases/";
-    std::string test_file = test_dir + arg_input_file.GetValue();
+    std::string test_file = test_dir + arg_input_file.GetValue() + ".vrp";
     std::cout << test_file << std::endl;
     std::ifstream f(test_file.c_str());
     if (!f.is_open()) {
@@ -53,12 +53,14 @@ int main(int argc, char *argv[]) {
     // testers
     Tester<ProbInput, ProbOutput, RoutePlan> tester(in, vrp_sm, vrp_om);
     // observer
-    std::ofstream ins_log("./logs/ins.log");
-    std::ofstream ins_tabu("./logs/ins.tabu");
-    std::ofstream inter_log("./logs/inter.log");
-    std::ofstream inter_tabu("./logs/inter.tabu");
-    std::ofstream intra_log("./logs/intra.log");
-    std::ofstream intra_tabu("./logs/intra.tabu");
+	std::string log_head("./logs/");
+	log_head += arg_input_file.GetValue() + "-";
+    std::ofstream ins_log(log_head + "ins.log");
+    std::ofstream ins_tabu(log_head + "ins.tabu");
+    std::ofstream inter_log(log_head + "inter.log");
+    std::ofstream inter_tabu(log_head + "inter.tabu");
+    std::ofstream intra_log(log_head + "intra.log");
+    std::ofstream intra_tabu(log_head + "intra.tabu");
     RunnerObserver<ProbInput, RoutePlan, InsMove> ins_ro(2, 2,
                                                          ins_log,
                                                          ins_log);
@@ -72,15 +74,15 @@ int main(int argc, char *argv[]) {
     InsMoveTabuSearch ts_ins(in, vrp_sm,
                              ins_ne, ins_tlm,
                              "InsMoveTabuSearch",
-                             cl, tester, ins_tabu);
+                             cl, tester, false, ins_tabu);
     InterSwapTabuSearch ts_intersw(in, vrp_sm,
                              intersw_ne, intersw_tlm,
                              "InterSwapTabuSearch",
-                             cl, tester, inter_tabu);
+                             cl, tester, false, inter_tabu);
     IntraSwapTabuSearch ts_intrasw(in, vrp_sm,
                              intrasw_ne, intrasw_tlm,
                              "IntraSwapTabuSearch",
-                             cl, tester, intra_tabu);
+                             cl, tester, false, intra_tabu);
     // set arguments
     // TabuSearch<ProbInput, RoutePlan, InsMove> ts_ins(in, vrp_sm,
     //                                                  ins_ne, ins_tlm,
@@ -101,7 +103,7 @@ int main(int argc, char *argv[]) {
     SimpleLocalSearch<ProbInput, ProbOutput, RoutePlan> sls(in, vrp_sm, vrp_om,
                                                             "SimLocalSearch");
     TokenRingSearch token_ring_solver(in, vrp_sm, vrp_om, "TokenRing", cl);
-    std::ofstream token_ring_f("./logs/token_ring.log");
+    std::ofstream token_ring_f(log_head + "token_ring.log");
     TokenRingObserver tr_observer(token_ring_f);
 
     // // Simple Local Search
@@ -123,7 +125,7 @@ int main(int argc, char *argv[]) {
     token_ring_solver.AddRunner(ts_ins);
     token_ring_solver.AddRunner(ts_intersw);
     token_ring_solver.AddRunner(ts_intrasw);
-    token_ring_solver.Solve();
+    token_ring_solver.MultiStartSolve(100);
 
 
     // // General Local Search
@@ -163,6 +165,8 @@ int main(int argc, char *argv[]) {
     std::ofstream out_f(test_file.c_str());
     out_f << token_ring_solver.GetOutput() << std::endl;
     out_f << "Best cost: " << best_cost << std::endl;
+	out_f << "Test " << token_ring_solver.get_num_trials() << " trials." << std::endl;
+	std::cout << "Test " << token_ring_solver.get_num_trials() << " trials." << std::endl;
     // }
 
     // // test cost computation
