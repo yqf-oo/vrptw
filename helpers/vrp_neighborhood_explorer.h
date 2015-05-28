@@ -1,7 +1,7 @@
 #ifndef _VRP_NEIGHBORHOOD_EXPLORER_H_
 #define _VRP_NEIGHBORHOOD_EXPLORER_H_
 #include <helpers/NeighborhoodExplorer.hh>
-#include <helpers/TabuListManager.hh>
+#include <helpers/ProhibitionManager.hh>
 #include <fstream>
 #include <vector>
 #include <string>
@@ -25,8 +25,8 @@ public NeighborhoodExplorer<ProbInput, RoutePlan, Move> {
     int DeltaCostFunction(const RoutePlan&, const Move&) const = 0;
     int DeltaObjective(const RoutePlan&, const Move&) const = 0;
     int DeltaViolations(const RoutePlan&, const Move &) const = 0;
-    virtual int BestMove(const RoutePlan&, Move&,
-                         TabuListManager<RoutePlan, Move>&) const;
+    int BestMove(const RoutePlan&, Move&,
+                 ProhibitionManager<RoutePlan, Move>&) const;
     int get_delta_cap() const { return delta_cap; }
     int get_delta_late_return() const { return delta_num_order_late_return; }
  protected:
@@ -239,7 +239,7 @@ TabuNeighborhoodExplorer<Move>::RouteCostsOnTimeWindow(const Route &r,
 
 template <class Move>
 int TabuNeighborhoodExplorer<Move>::BestMove(const RoutePlan &st, Move &mv,
-                                             TabuListManager<RoutePlan, Move> &pm) const {
+                                             ProhibitionManager<RoutePlan, Move> &pm) const {
     // get the best non-prohibited move, 
     // but if all moves are prohibited, then get the best one among them
     // number of moves found with the same best value
@@ -259,8 +259,11 @@ int TabuNeighborhoodExplorer<Move>::BestMove(const RoutePlan &st, Move &mv,
         //                        + get_delta_late_return();
         // if (cap_cost || late_return_cost)
         //     continue;
-        std::ofstream out_f("make.move");
-        out_f << "Test move" << mv << std::endl;
+        if (get_delta_late_return() > 0)
+		continue;
+        // std::ofstream out_f("make.move");
+        // out_f << "Test move" << mv << std::endl;
+        // std::cout << this->name << " delta violations: " << get_delta_late_return() << std::endl;
         if (LessThan(mv_cost, best_delta)) {
             if (!pm.ProhibitedMove(st, mv, mv_cost)) {
                 best_move = mv;

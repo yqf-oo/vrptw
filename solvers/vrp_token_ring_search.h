@@ -43,6 +43,7 @@ public AbstractLocalSearch<ProbInput, ProbOutput, RoutePlan> {
     int idle_rounds() const { return idle_rounds_; }
     void set_max_rounds(unsigned r) { max_rounds_ = r; }
     void set_max_idle_rounds(unsigned r) { max_idle_rounds_ = r; }
+	int get_num_trials() const { return num_trials_; }
 
  private:
     void Run();
@@ -52,11 +53,13 @@ public AbstractLocalSearch<ProbInput, ProbOutput, RoutePlan> {
     unsigned current_runner_;
     int round_;
     int idle_rounds_;
-    int max_rounds_, max_idle_rounds_;
-    int num_trails_;
+    int max_rounds_, max_idle_rounds_, max_idle_trials_;
+    int num_trials_;
+	int idle_trials_;
     ArgumentGroup token_ring_arguments;
-    ValArgument<int> arg_max_idle_rounds;
     ValArgument<int> arg_max_rounds;
+    ValArgument<int> arg_max_idle_rounds;
+    ValArgument<int> arg_max_idle_trials;
     ValArgument<double> arg_timeout;
     TokenRingObserver *observer;
     Chronometer chrono;
