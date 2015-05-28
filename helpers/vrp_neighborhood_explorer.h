@@ -244,55 +244,18 @@ int TabuNeighborhoodExplorer<Move>::BestMove(const RoutePlan &st, Move &mv,
 	// but if all moves are prohibited, then get the best one among them
 	// number of moves found with the same best value
 	unsigned int number_of_bests = 1;
-	FirstMove(st, mv);
-	int mv_cost = DeltaCostFunction(st, mv);
-	Move best_move = mv;
-	int best_delta = mv_cost;
-	bool all_moves_prohibited = pm.ProhibitedMove(st, mv, mv_cost);
+    FirstMove(st,mv);
+    int mv_cost = DeltaCostFunction(st,mv);
+    Move best_move = mv;
+    int best_delta = mv_cost;
+    bool all_moves_prohibited = pm.ProhibitedMove(st, mv, mv_cost);
 
-	static unsigned int i1 = 0, i2 = 0;
+    static unsigned int i1 = 0, i2 = 0;
 
-	while (NextMove(st, mv) && !this->ExternalTerminationRequest()) {
-		mv_cost = DeltaCostFunction(st, mv);
+    while (NextMove(st, mv) && !this->ExternalTerminationRequest()) {
+        mv_cost = DeltaCostFunction(st, mv);
         if (get_delta_late_return() > 0)
             continue;
-		if (LessThan(mv_cost, best_delta)) {
-			if (!pm.ProhibitedMove(st, mv, mv_cost)) {
-				best_move = mv;
-				best_delta = mv_cost;
-				number_of_bests = 1;
-				all_moves_prohibited = false;
-			} else if (all_moves_prohibited) {
-				best_move = mv;
-				best_delta = mv_cost;
-				number_of_bests = 1;
-			}
-		} else if (EqualTo(mv_cost, best_delta)) {
-			if (!pm.ProhibitedMove(st, mv, mv_cost)) {
-				if (all_moves_prohibited) {
-					best_move = mv;
-					number_of_bests = 1;
-					all_moves_prohibited = false;
-				} else {
-					if (Random::Int(0,number_of_bests) == 0) // accept the move with probability 1 / (1 + number_of_bests)
-						best_move = mv;
-					number_of_bests++;
-				}
-			} else if (all_moves_prohibited) {
-				if (Random::Int(0,number_of_bests) == 0) // accept the move with probability 1 / (1 + number_of_bests)
-					best_move = mv;
-				number_of_bests++;
-			}
-		}
-		else // mv_cost is greater than best_delta
-			if (all_moves_prohibited && !pm.ProhibitedMove(st, mv, mv_cost))
-			{
-				best_move = mv;
-				best_delta = mv_cost;
-				number_of_bests = 1;
-				all_moves_prohibited = false;
-			}
-	}
         if (LessThan(mv_cost, best_delta)) {
             if (!pm.ProhibitedMove(st, mv, mv_cost)) {
                 best_move = mv;
@@ -311,7 +274,8 @@ int TabuNeighborhoodExplorer<Move>::BestMove(const RoutePlan &st, Move &mv,
                     number_of_bests = 1;
                     all_moves_prohibited = false;
                 } else {
-                    if (Random::Int(0,number_of_bests) == 0) // accept the move with probability 1 / (1 + number_of_bests)
+                    // accept the move with probability 1 / (1 + number_of_bests)
+                    if (Random::Int(0,number_of_bests) == 0)
                         best_move = mv;
                     number_of_bests++;
                 }
@@ -320,23 +284,20 @@ int TabuNeighborhoodExplorer<Move>::BestMove(const RoutePlan &st, Move &mv,
                     best_move = mv;
                 number_of_bests++;
             }
+        } else if (all_moves_prohibited && !pm.ProhibitedMove(st, mv, mv_cost)) {
+            best_move = mv;
+            best_delta = mv_cost;
+            number_of_bests = 1;
+            all_moves_prohibited = false;
         }
-        else // mv_cost is greater than best_delta
-            if (all_moves_prohibited && !pm.ProhibitedMove(st, mv, mv_cost))
-            {
-                best_move = mv;
-                best_delta = mv_cost;
-                number_of_bests = 1;
-                all_moves_prohibited = false;
-            }
     }
 
-	if (all_moves_prohibited)
-		i1++;
-	i2++;
-	//std::cerr << (float)i1/i2 << ' ' << best_move << " ";
-	mv = best_move;
-	return best_delta;
+    if (all_moves_prohibited)
+        i1++;
+    i2++;
+    //std::cerr << (float)i1/i2 << ' ' << best_move << " ";
+    mv = best_move;
+    return best_delta;
 }
 
 #endif
