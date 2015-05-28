@@ -27,13 +27,13 @@ bool InsMoveNeighborhoodExplorer::FeasibleMove(const RoutePlan &rp,
     if (rp[mv.new_route].IsExcList()) {
         if (in.OrderGroupVect(mv.order).IsMandatory())
             return false;
-	} else {
-		int vehicle = rp[mv.new_route].get_vehicle();
-		unsigned vehicle_cap = in.VehicleVect(vehicle).get_cap();
-		unsigned order_demand = in.OrderGroupVect(mv.order).get_demand();
-		if (order_demand + rp[mv.new_route].demand() > vehicle_cap)
-			return false;
-	}
+    } else {
+        int vehicle = rp[mv.new_route].get_vehicle();
+        unsigned vehicle_cap = in.VehicleVect(vehicle).get_cap();
+        unsigned order_demand = in.OrderGroupVect(mv.order).get_demand();
+        if (order_demand + rp[mv.new_route].demand() > vehicle_cap)
+            return false;
+    }
     return true;
 }
 
@@ -365,21 +365,20 @@ bool InterSwapNeighborhoodExplorer::FeasibleMove(const RoutePlan &rp,
         return false;
     if (mv.route1 == mv.route2)
         return false;
-
-	if (!rp[mv.route1].IsExcList()) {
-		int old_veh = rp[mv.route1].get_vehicle();
-		unsigned old_cap = in.VehicleVect(old_veh).get_cap();
-		unsigned d2 = in.OrderGroupVect(mv.ord2).get_demand();
-		if (d2 + rp[mv.route1].demand() > old_cap)
-			return false;
-	}
-	if (!rp[mv.route2].IsExcList()) {
-		int new_veh = rp[mv.route2].get_vehicle();
-		unsigned new_cap = in.VehicleVect(new_veh).get_cap();
-		unsigned d1 = in.OrderGroupVect(mv.ord1).get_demand();
-		if (d1 + rp[mv.route2].demand() > new_cap)
-			return false;
-	}
+    if (!rp[mv.route1].IsExcList()) {
+        int old_veh = rp[mv.route1].get_vehicle();
+        unsigned old_cap = in.VehicleVect(old_veh).get_cap();
+        unsigned d2 = in.OrderGroupVect(mv.ord2).get_demand();
+        if (d2 + rp[mv.route1].demand() > old_cap)
+            return false;
+    }
+    if (!rp[mv.route2].IsExcList()) {
+        int new_veh = rp[mv.route2].get_vehicle();
+        unsigned new_cap = in.VehicleVect(new_veh).get_cap();
+        unsigned d1 = in.OrderGroupVect(mv.ord1).get_demand();
+        if (d1 + rp[mv.route2].demand() > new_cap)
+            return false;
+    }
     return true;
 }
 

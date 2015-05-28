@@ -255,7 +255,7 @@ int TabuNeighborhoodExplorer<Move>::BestMove(const RoutePlan &st, Move &mv,
     while (NextMove(st, mv) && !this->ExternalTerminationRequest()) {
         mv_cost = DeltaCostFunction(st, mv);
         if (get_delta_late_return() > 0)
-		continue;
+            continue;
         if (LessThan(mv_cost, best_delta)) {
             if (!pm.ProhibitedMove(st, mv, mv_cost)) {
                 best_move = mv;
