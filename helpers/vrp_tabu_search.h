@@ -20,7 +20,7 @@ public TabuSearch<ProbInput, RoutePlan, InsMove> {
                       std::string name, 
                       CLParser& cl,
                       AbstractTester<ProbInput, RoutePlan> &t,
-					  bool flag,
+                      bool flag,
                       std::ostream &log_os = std::cout):
         TabuSearch<ProbInput, RoutePlan, InsMove>(in, e_sm, e_ne,
                                                   tlm, name, cl, t),
@@ -36,14 +36,14 @@ class InterSwapTabuSearch:
 public TabuSearch<ProbInput, RoutePlan, InterSwap> {
  public:
     InterSwapTabuSearch(const ProbInput &in,
-                      VRPStateManager &e_sm,
-                      InterSwapNeighborhoodExplorer &e_ne,
-                      InterSwapTabuListManager &tlm,
-                      std::string name, 
-                      CLParser& cl,
-                      AbstractTester<ProbInput, RoutePlan> &t,
-					  bool flag,
-                      std::ostream &log_os = std::cout):
+                        VRPStateManager &e_sm,
+                        InterSwapNeighborhoodExplorer &e_ne,
+                        InterSwapTabuListManager &tlm,
+                        std::string name, 
+                        CLParser& cl,
+                        AbstractTester<ProbInput, RoutePlan> &t,
+					    bool flag,
+                        std::ostream &log_os = std::cout):
         TabuSearch<ProbInput, RoutePlan, InterSwap>(in, e_sm, e_ne,
                                                   tlm, name, cl, t),
         have_log(flag), log(log_os) { }
@@ -58,14 +58,14 @@ class IntraSwapTabuSearch:
 public TabuSearch<ProbInput, RoutePlan, IntraSwap> {
  public:
     IntraSwapTabuSearch(const ProbInput &in,
-                      VRPStateManager &e_sm,
-                      IntraSwapNeighborhoodExplorer &e_ne,
-                      IntraSwapTabuListManager &tlm,
-                      std::string name, 
-                      CLParser& cl,
-                      AbstractTester<ProbInput, RoutePlan> &t,
-                      bool flag,
-                      std::ostream &log_os = std::cout):
+                        VRPStateManager &e_sm,
+                        IntraSwapNeighborhoodExplorer &e_ne,
+                        IntraSwapTabuListManager &tlm,
+                        std::string name, 
+                        CLParser& cl,
+                        AbstractTester<ProbInput, RoutePlan> &t,
+                        bool flag,
+                        std::ostream &log_os = std::cout):
         TabuSearch<ProbInput, RoutePlan, IntraSwap>(in, e_sm, e_ne,
                                                   tlm, name, cl, t),
         have_log(flag), log(log_os) { }

@@ -11,8 +11,8 @@ TokenRingSearch::TokenRingSearch(const ProbInput &in,
     AbstractLocalSearch<ProbInput, ProbOutput, RoutePlan>(in, e_sm,
                                                           e_om, name),
     current_runner_(0), round_(0), idle_rounds_(0),
-    max_rounds_(1), max_idle_rounds_(1), max_idle_trials_(0),
-   	num_trials_(0), idle_trials_(0),
+    max_rounds_(1), max_idle_rounds_(1),
+    max_idle_trials_(0), num_trials_(0), idle_trials_(0),
     token_ring_arguments("tr_" + name, "tr_" + name, false),
     arg_max_rounds("max_rounds", "mr", false),
     arg_max_idle_rounds("max_idle_rounds", "mir", false),
@@ -32,8 +32,8 @@ TokenRingSearch::TokenRingSearch(const ProbInput &in,
     AbstractLocalSearch<ProbInput, ProbOutput, RoutePlan>(in, e_sm,
                                                           e_om, name),
     current_runner_(0), round_(0), idle_rounds_(0),
-    max_rounds_(1), max_idle_rounds_(1), max_idle_trials_(0),
-	num_trials_(0), idle_trials_(0),
+    max_rounds_(1), max_idle_rounds_(1),
+    max_idle_trials_(0), num_trials_(0), idle_trials_(0),
     token_ring_arguments("tr_" + name, "tr_" + name, false),
     arg_max_rounds("max_rounds", "mr", false),
     arg_max_idle_rounds("max_idle_rounds", "mir", false),
@@ -85,10 +85,10 @@ void TokenRingSearch::MultiStartSolve(unsigned trials) {
             }
         }
 #endif
-		if (idle_trials_ >= max_idle_trials_) {
-			std::cout << "Idle trials exceeded." << std::endl;
-			break;
-		}
+        if (idle_trials_ >= max_idle_trials_) {
+            std::cout << "Idle trials exceeded." << std::endl;
+            break;
+        }
         if (timeout_expired) break;
     }
     this->best_state = global_best_state;
@@ -116,8 +116,8 @@ void TokenRingSearch::Run() {
     // std::cout << this->timeout << ", " << this->timeout_set
     //           << ", " << this->current_timeout << std::endl;
     // std::ofstream fout("./token_ring.debug");
-	round_ = 0;
-	idle_rounds_ = 0;
+    round_ = 0;
+    idle_rounds_ = 0;
     do {
         ++round_;
         ++idle_rounds_;
@@ -144,8 +144,8 @@ void TokenRingSearch::Run() {
             if (observer != NULL) observer->NotifyRound(*this);
             if (lower_bound_reached || timeout_expired) break;
         }
-	std::cout << this->name << " #" << num_trials_ << " trials,"
-		      << " round " << round_ << " finished." << std::endl;
+        std::cout << this->name << " #" << num_trials_ << " trials,"
+                  << " round " << round_ << " finished." << std::endl;
     }while(round_ < max_rounds_ && idle_rounds_ < max_idle_rounds_
            && !lower_bound_reached && !timeout_expired);
     chrono.Stop();

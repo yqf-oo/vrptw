@@ -293,6 +293,43 @@ int TabuNeighborhoodExplorer<Move>::BestMove(const RoutePlan &st, Move &mv,
 				all_moves_prohibited = false;
 			}
 	}
+        if (LessThan(mv_cost, best_delta)) {
+            if (!pm.ProhibitedMove(st, mv, mv_cost)) {
+                best_move = mv;
+                best_delta = mv_cost;
+                number_of_bests = 1;
+                all_moves_prohibited = false;
+            } else if (all_moves_prohibited) {
+                best_move = mv;
+                best_delta = mv_cost;
+                number_of_bests = 1;
+            }
+        } else if (EqualTo(mv_cost, best_delta)) {
+            if (!pm.ProhibitedMove(st, mv, mv_cost)) {
+                if (all_moves_prohibited) {
+                    best_move = mv;
+                    number_of_bests = 1;
+                    all_moves_prohibited = false;
+                } else {
+                    if (Random::Int(0,number_of_bests) == 0) // accept the move with probability 1 / (1 + number_of_bests)
+                        best_move = mv;
+                    number_of_bests++;
+                }
+            } else if (all_moves_prohibited) {
+                if (Random::Int(0,number_of_bests) == 0) // accept the move with probability 1 / (1 + number_of_bests)
+                    best_move = mv;
+                number_of_bests++;
+            }
+        }
+        else // mv_cost is greater than best_delta
+            if (all_moves_prohibited && !pm.ProhibitedMove(st, mv, mv_cost))
+            {
+                best_move = mv;
+                best_delta = mv_cost;
+                number_of_bests = 1;
+                all_moves_prohibited = false;
+            }
+    }
 
 	if (all_moves_prohibited)
 		i1++;

@@ -54,9 +54,9 @@ public AbstractLocalSearch<ProbInput, ProbOutput, RoutePlan> {
     int round_;
     int idle_rounds_;
     int max_rounds_, max_idle_rounds_;
-	int max_idle_trials_;
+    int max_idle_trials_;
     int num_trials_;
-	int idle_trials_;
+    int idle_trials_;
     ArgumentGroup token_ring_arguments;
     ValArgument<int> arg_max_rounds;
     ValArgument<int> arg_max_idle_rounds;
