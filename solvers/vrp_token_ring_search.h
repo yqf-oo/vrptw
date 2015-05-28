@@ -53,7 +53,8 @@ public AbstractLocalSearch<ProbInput, ProbOutput, RoutePlan> {
     unsigned current_runner_;
     int round_;
     int idle_rounds_;
-    int max_rounds_, max_idle_rounds_, max_idle_trials_;
+    int max_rounds_, max_idle_rounds_;
+	int max_idle_trials_;
     int num_trials_;
 	int idle_trials_;
     ArgumentGroup token_ring_arguments;

@@ -20,7 +20,7 @@ public TabuSearch<ProbInput, RoutePlan, InsMove> {
                       std::string name, 
                       CLParser& cl,
                       AbstractTester<ProbInput, RoutePlan> &t,
-                      bool flag,
+					  bool flag,
                       std::ostream &log_os = std::cout):
         TabuSearch<ProbInput, RoutePlan, InsMove>(in, e_sm, e_ne,
                                                   tlm, name, cl, t),
@@ -28,7 +28,7 @@ public TabuSearch<ProbInput, RoutePlan, InsMove> {
     ~InsMoveTabuSearch() { }
     void StoreMove();
  private:
-    bool have_log;
+    bool flag;
     std::ostream &log;
 };
 
@@ -42,7 +42,7 @@ public TabuSearch<ProbInput, RoutePlan, InterSwap> {
                       std::string name, 
                       CLParser& cl,
                       AbstractTester<ProbInput, RoutePlan> &t,
-                      bool flag,
+					  bool flag,
                       std::ostream &log_os = std::cout):
         TabuSearch<ProbInput, RoutePlan, InterSwap>(in, e_sm, e_ne,
                                                   tlm, name, cl, t),
@@ -50,7 +50,7 @@ public TabuSearch<ProbInput, RoutePlan, InterSwap> {
     ~InterSwapTabuSearch() { }
     void StoreMove();
  private:
-    bool have_log;
+	bool have_log;
     std::ostream &log;
 };
 
@@ -72,7 +72,7 @@ public TabuSearch<ProbInput, RoutePlan, IntraSwap> {
     ~IntraSwapTabuSearch() { }
     void StoreMove();
  private:
-    bool have_log;
+	bool have_log;
     std::ostream &log;
 };
 
@@ -86,20 +86,20 @@ void InsMoveTabuSearch::StoreMove() {
 }
 
 void InterSwapTabuSearch::StoreMove() {
-     if (have_log) {
-        log << "--" << std::endl;
-        this->pm.Print(log);    // for debug, print tabu list
-        log << "--" << std::endl;
-     }
+	if (have_log) {
+		log << "--" << std::endl;
+		this->pm.Print(log);    // for debug, print tabu list
+		log << "--" << std::endl;
+	}
     TabuSearch<ProbInput, RoutePlan, InterSwap>::StoreMove();
 }
 
 void IntraSwapTabuSearch::StoreMove() {
-    if (have_log) {
-        log << "--" << std::endl;
-        this->pm.Print(log);    // for debug, print tabu list
-        log << "--" << std::endl;
-    }
+	if (have_log) {
+		log << "--" << std::endl;
+		this->pm.Print(log);    // for debug, print tabu list
+		log << "--" << std::endl;
+	}
     TabuSearch<ProbInput, RoutePlan, IntraSwap>::StoreMove();
 }
 

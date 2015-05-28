@@ -11,7 +11,8 @@ TokenRingSearch::TokenRingSearch(const ProbInput &in,
     AbstractLocalSearch<ProbInput, ProbOutput, RoutePlan>(in, e_sm,
                                                           e_om, name),
     current_runner_(0), round_(0), idle_rounds_(0),
-    max_rounds_(100), max_idle_rounds_(1), num_trials_(0), idle_trials_(0),
+    max_rounds_(1), max_idle_rounds_(1), max_idle_trials_(0),
+   	num_trials_(0), idle_trials_(0),
     token_ring_arguments("tr_" + name, "tr_" + name, false),
     arg_max_rounds("max_rounds", "mr", false),
     arg_max_idle_rounds("max_idle_rounds", "mir", false),
@@ -31,7 +32,8 @@ TokenRingSearch::TokenRingSearch(const ProbInput &in,
     AbstractLocalSearch<ProbInput, ProbOutput, RoutePlan>(in, e_sm,
                                                           e_om, name),
     current_runner_(0), round_(0), idle_rounds_(0),
-    max_rounds_(100), max_idle_rounds_(1), num_trials_(0), idle_trials_(0),
+    max_rounds_(1), max_idle_rounds_(1), max_idle_trials_(0),
+	num_trials_(0), idle_trials_(0),
     token_ring_arguments("tr_" + name, "tr_" + name, false),
     arg_max_rounds("max_rounds", "mr", false),
     arg_max_idle_rounds("max_idle_rounds", "mir", false),
@@ -41,6 +43,7 @@ TokenRingSearch::TokenRingSearch(const ProbInput &in,
     token_ring_arguments.AddArgument(arg_max_idle_rounds);
     token_ring_arguments.AddArgument(arg_max_idle_trials);
     token_ring_arguments.AddArgument(arg_timeout);
+    cl.AddArgument(token_ring_arguments);
     cl.MatchArgument(token_ring_arguments);
     if (token_ring_arguments.IsSet()) {
         if (arg_max_rounds.IsSet())
@@ -82,7 +85,7 @@ void TokenRingSearch::MultiStartSolve(unsigned trials) {
             }
         }
 #endif
-		if (idle_trials_ > max_idle_trials_) {
+		if (idle_trials_ >= max_idle_trials_) {
 			std::cout << "Idle trials exceeded." << std::endl;
 			break;
 		}
