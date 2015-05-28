@@ -28,7 +28,7 @@ public TabuSearch<ProbInput, RoutePlan, InsMove> {
     ~InsMoveTabuSearch() { }
     void StoreMove();
  private:
-    bool flag;
+    bool have_log;
     std::ostream &log;
 };
 
