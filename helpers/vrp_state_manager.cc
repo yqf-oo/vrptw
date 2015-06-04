@@ -20,28 +20,32 @@ void VRPStateManager::RandomState(RoutePlan &rp) {
 		assert(o.IsDayFeasible(day));
 
 		std::vector<int> rvec(0);
-		for (int k = 0; k < in.get_num_vehicle(); ++k) {
-			if (in.IsReachable(k, i)) {
-				rvec.push_back(k);
-			}
-		}
-		assert(rvec.size() >= 1);
-		// int veh = 0;
-		// for (unsigned j = 1; j < rvec.size(); ++j) {
-		// 	int c1 = in.VehicleVect(veh).fixed_cost();
-		// 	int c2 = in.VehicleVect(j).fixed_cost();
-		// 	if (c1 > c2)
-		// 		veh = j;
-		// }
-		int idx, cap, route_index;
-		do {
-			idx = Random::Int(0, rvec.size() - 1);
-			int veh = rvec[idx];
-			cap = in.VehicleVect(veh).get_cap();
-			route_index = day * in.get_num_vehicle() + veh;
-		}while(rp[route_index].demand() + o.get_demand() > cap);
-		rp.AddOrder(i, day, rvec[idx], false);
-	}
+		std::vector<int> qvec(0);
+        for (int k = 0; k < in.get_num_vehicle(); ++k) {
+            if (in.IsReachable(k, i)) {
+                int cap = in.VehicleVect(k).get_cap();
+                int route_index = day * in.get_num_vehicle() + k;
+                int delta = cap - rp[route_index].demand() - o.get_demand();
+                if (delta) {
+                    rvec.push_back(k);
+                    qvec.push_back(delta);
+                }
+            }
+        }
+        if (rvec.size()) {
+            // int max = 0, idx = 0;
+            // for (unsigned k = 0; k < rvec.size(); ++k) {
+            //     if (qvec[k] > max) {
+            //         max = qvec[k];
+            //         idx = k;
+            //     }
+            // }
+            int idx = Random::Int(0, rvec.size() - 1);
+            rp.AddOrder(i, day, rvec[idx], false);
+        } else {
+            rp.AddOrder(i, day, 0, true);
+        }
+    }
 	UpdateTimeTable(rp);
 }
 
@@ -96,7 +100,12 @@ void VRPStateManager::UpdateTimeTable(RoutePlan &rp) {
 
 int VRPStateManager::CostFunction(const RoutePlan &rp) const {
 	num_order_late_return = 0;
-	return (Objective(rp) + Violations(rp));
+    int obj = Objective(rp);
+    int vio = Violations(rp);
+    int cap_vio = vio - 500 * num_order_late_return;
+    rp.set_vio(cap_vio + num_order_late_return);
+    return (obj + vio);
+	// return (Objective(rp) + Violations(rp));
 }
 
 int VRPStateManager::Objective(const RoutePlan &rp) const {
@@ -126,7 +135,7 @@ int VRPStateManager::Violations(const RoutePlan &rp) const {
 		<< late_cost << std::endl;
 	return cap_cost + late_cost;
 #else
-	return ComputeCapExceededCost(rp, 1) + ComputeLateReturnCost(rp, 1);
+	return ComputeCapExceededCost(rp, 1) + ComputeLateReturnCost(rp, 500);
 #endif
 }
 
@@ -188,8 +197,7 @@ VRPStateManager::ComputeOptOrderCost(const RoutePlan &rp, int weight) const {
 	int cost = 0, extra_list = rp.size() - 1;
 	for (unsigned i = 0; i < rp[extra_list].size(); ++i) {
 		const OrderGroup &og = in.OrderGroupVect(rp[extra_list][i]);
-		if (!og.IsMandatory())
-			cost += og.get_demand();
+        cost += og.get_demand();
 	}
 	return (weight * cost);
 }
@@ -204,10 +212,10 @@ VRPStateManager::ComputeTranportationCost(const RoutePlan &rp) const {
 		// cost += cr->GetCostComponent().Cost(rp[i]);
 		if (rp[i].size())   // add vehcile fixed cost
 			cost += in.VehicleVect(rp[i].get_vehicle()).fixed_cost();
-#ifdef _STATE_DEBUG_H_
-		std::cout << "Route " << i << ", " << "var cost: " << route_var_cost
-			<< std::endl;
-#endif
+// #ifdef _STATE_DEBUG_H_
+// 		std::cout << "Route " << i << ", " << "var cost: " << route_var_cost
+// 			<< std::endl;
+// #endif
 	}
 	return cost;
 }

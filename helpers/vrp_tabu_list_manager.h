@@ -7,16 +7,17 @@
 
 class InsMoveTabuListManager: public TabuListManager<RoutePlan, InsMove> {
  public:
-    InsMoveTabuListManager(unsigned min_tenture, unsigned max_tentrue):
-        TabuListManager<RoutePlan, InsMove>() { }
+    InsMoveTabuListManager(unsigned i):
+        TabuListManager<RoutePlan, InsMove>(), index(i) { }
     bool Inverse(const InsMove&, const InsMove&) const;
  protected:
+    unsigned index;
     // bool ListMember(const InsMove&) const;
 };
 
 class InterSwapTabuListManager: public TabuListManager<RoutePlan, InterSwap> {
  public:
-    InterSwapTabuListManager(unsigned min_tenture, unsigned max_tentrue):
+    InterSwapTabuListManager():
         TabuListManager<RoutePlan, InterSwap>() { }
     bool Inverse(const InterSwap&, const InterSwap&) const;
  protected:
@@ -25,7 +26,7 @@ class InterSwapTabuListManager: public TabuListManager<RoutePlan, InterSwap> {
 
 class IntraSwapTabuListManager: public TabuListManager<RoutePlan, IntraSwap> {
  public:
-    IntraSwapTabuListManager(unsigned min_tenture, unsigned max_tentrue):
+    IntraSwapTabuListManager():
         TabuListManager<RoutePlan, IntraSwap>() { }
     bool Inverse(const IntraSwap&, const IntraSwap&) const;
  protected:

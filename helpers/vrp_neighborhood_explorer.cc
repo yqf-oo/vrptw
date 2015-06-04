@@ -17,6 +17,8 @@ void InsMoveNeighborhoodExplorer::RandomMove(const RoutePlan &rp,
 
 bool InsMoveNeighborhoodExplorer::FeasibleMove(const RoutePlan &rp,
                                                const InsMove &mv) const {
+    // std::ofstream f("./logs/fea.move", std::ios::app);
+    // f << mv << std::endl;
     if (!rp[mv.old_route].size())   // old route is null
         return false;
     // if (mv.old_pos > rp[mv.old_route].size() - 1 ||
@@ -28,6 +30,7 @@ bool InsMoveNeighborhoodExplorer::FeasibleMove(const RoutePlan &rp,
         if (in.OrderGroupVect(mv.order).IsMandatory())
             return false;
     } else {
+        // f << "here " << mv << std::endl;
         int vehicle = rp[mv.new_route].get_vehicle();
         unsigned vehicle_cap = in.VehicleVect(vehicle).get_cap();
         unsigned order_demand = in.OrderGroupVect(mv.order).get_demand();
@@ -63,6 +66,8 @@ void InsMoveNeighborhoodExplorer::FirstMove(const RoutePlan &rp,
     mv.order = rp[mv.old_route][mv.old_pos];
     mv.new_route = mv.old_route + 1;
     mv.new_pos = 0;
+    if (!FeasibleMove(rp, mv))
+        NextMove(rp, mv);
 }
 
 bool InsMoveNeighborhoodExplorer::NextMove(const RoutePlan &rp,
@@ -71,10 +76,6 @@ bool InsMoveNeighborhoodExplorer::NextMove(const RoutePlan &rp,
     do {
         not_last = AnyNextMove(rp, mv);
     }while(!FeasibleMove(rp, mv) && not_last);
-    if (not_last)
-        mv.order = rp[mv.old_route][mv.old_pos];
-    else
-        mv.order = -1;
     return not_last;
 }
 
@@ -82,10 +83,10 @@ bool InsMoveNeighborhoodExplorer::AnyNextMove(const RoutePlan &rp,
                                               InsMove &mv) const {
     unsigned old_route_size = rp[mv.old_route].size();
     unsigned new_route_size = rp[mv.new_route].size();
-    #ifdef _DEBUG_H_
-    std::fstream f("./logs/move.log", std::ios::app);
+#ifdef _DEBUG_H_
+    std::ofstream f("./logs/move.log", std::ios::app);
     f << "-- " << "size:" << new_route_size << " " << mv << " --" << std::endl;
-    #endif
+#endif
     if (new_route_size && mv.new_pos < new_route_size) {
         mv.new_pos++;
     } else if (mv.new_route < rp.size() - 1) {
@@ -105,6 +106,8 @@ bool InsMoveNeighborhoodExplorer::AnyNextMove(const RoutePlan &rp,
         mv.new_route = 0;
         mv.new_pos = 0;
     }
+    if  (rp[mv.old_route].size())
+        mv.order = rp[mv.old_route][mv.old_pos];
     return true;
 }
 
@@ -169,11 +172,20 @@ InsMoveNeighborhoodExplorer::DeltaViolations(const RoutePlan &rp,
     #ifdef _NE_DEBUG_H_
     int cap_delta = DeltaCapExceededCost(rp, mv, 1);
     int late_delta = DeltaLateReturnCost(rp, mv, 1);
-    std::cout << "delta violation:";
-    std::cout << cap_delta << ", " << late_delta << std::endl;
+    if (cap_delta) {
+        std::cout << "---" << std::endl;
+        std::cout << rp.get_vio() << std::endl;
+        std::cout << rp << std::endl;
+        std::cout << mv << std::endl;
+        std::cout << "cap: " << cap_delta << ", " << "late: " << late_delta << std::endl;
+        std::cout << rp[mv.new_route].demand() << ", "
+                  << in.VehicleVect(rp[mv.new_route].get_vehicle()).get_cap() << ", "
+                  << in.OrderGroupVect(mv.order).get_demand() << std::endl;
+        std::cout << in.OrderGroupVect(mv.order) << std::endl;
+    }
     return cap_delta + late_delta;
     #else
-    return DeltaCapExceededCost(rp, mv, 1) + DeltaLateReturnCost(rp, mv, 1);
+    return DeltaCapExceededCost(rp, mv, 1) + DeltaLateReturnCost(rp, mv, 500);
     #endif
 }
 
@@ -355,6 +367,10 @@ void InterSwapNeighborhoodExplorer::RandomMove(const RoutePlan &rp,
 
 bool InterSwapNeighborhoodExplorer::FeasibleMove(const RoutePlan &rp,
                                                const InterSwap &mv) const {
+#ifdef _VNE_DEBUG_H_
+    std::ofstream f("./logs/fea.move", std::ios::app);
+    f << mv << std::endl;
+#endif
     if (!rp[mv.route1].size() || !rp[mv.route2].size())
         return false;
     if (rp[mv.route1].IsExcList() &&
@@ -365,19 +381,38 @@ bool InterSwapNeighborhoodExplorer::FeasibleMove(const RoutePlan &rp,
         return false;
     if (mv.route1 == mv.route2)
         return false;
-    if (!rp[mv.route1].IsExcList()) {
-        int old_veh = rp[mv.route1].get_vehicle();
-        unsigned old_cap = in.VehicleVect(old_veh).get_cap();
-        unsigned d2 = in.OrderGroupVect(mv.ord2).get_demand();
-        if (d2 + rp[mv.route1].demand() > old_cap)
+    unsigned d2 = in.OrderGroupVect(mv.ord2).get_demand();
+    unsigned d1 = in.OrderGroupVect(mv.ord1).get_demand();
+    int old_veh = rp[mv.route1].get_vehicle();
+    unsigned old_cap = in.VehicleVect(old_veh).get_cap();
+    int new_veh = rp[mv.route2].get_vehicle();
+    unsigned new_cap = in.VehicleVect(new_veh).get_cap();
+    if (!rp[mv.route1].IsExcList() && !rp[mv.route2].IsExcList()) {
+#ifdef _VNE_DEBUG_H_
+        f << "#1 " << mv << std::endl;
+        f << "--" << std::endl;
+        f << "r1: " << old_veh << ", " << old_cap << ", " << d1 << ", " << rp[mv.route1].demand() << std::endl;
+        f << "r2: " << new_veh << ", " << new_cap << ", " << d2 << ", " << rp[mv.route2].demand() << std::endl;
+        f << "--" << std::endl;
+#endif
+        if (d2 + rp[mv.route1].demand() - d1 > old_cap)
             return false;
-    }
-    if (!rp[mv.route2].IsExcList()) {
-        int new_veh = rp[mv.route2].get_vehicle();
-        unsigned new_cap = in.VehicleVect(new_veh).get_cap();
-        unsigned d1 = in.OrderGroupVect(mv.ord1).get_demand();
-        if (d1 + rp[mv.route2].demand() > new_cap)
+        else if (d1 + rp[mv.route2].demand() - d2> new_cap)
             return false;
+    } else {
+        if (!rp[mv.route1].IsExcList()) {
+#ifdef _VNE_DEBUG_H_
+            f << "#2 " << mv << std::endl;
+#endif
+            if (d2 + rp[mv.route1].demand() - d1 > old_cap)
+                return false;
+        } else if (!rp[mv.route2].IsExcList()) {
+#ifdef _VNE_DEBUG_H_
+            f << "#2 " << mv << std::endl;
+#endif
+            if (d1 + rp[mv.route2].demand() - d2 > new_cap)
+                return false;
+        }
     }
     return true;
 }
@@ -421,6 +456,8 @@ void InterSwapNeighborhoodExplorer::FirstMove(const RoutePlan &rp,
     mv.ord1 = rp[mv.route1][mv.pos1];
     mv.pos2 = 0;
     mv.ord2 = rp[mv.route2][mv.pos2];
+    if (!FeasibleMove(rp, mv))
+        NextMove(rp, mv);
 }
 
 bool InterSwapNeighborhoodExplorer::NextMove(const RoutePlan &rp,
@@ -429,6 +466,10 @@ bool InterSwapNeighborhoodExplorer::NextMove(const RoutePlan &rp,
     do {
         not_last = AnyNextMove(rp, mv);
     }while(!FeasibleMove(rp, mv) && not_last);
+#ifdef _VNE_DEBUG_H_
+    std::ofstream f("./logs/next.move", std::ios::app);
+    f << mv << std::endl;
+#endif
     return not_last;
 }
 
@@ -436,6 +477,10 @@ bool InterSwapNeighborhoodExplorer::AnyNextMove(const RoutePlan &rp,
                                               InterSwap &mv) const {
     unsigned route1_size = rp[mv.route1].size();
     unsigned route2_size = rp[mv.route2].size();
+#ifdef _VNE_DEBUG_H_
+    std::ofstream f("./logs/move.log", std::ios::app);
+    f << mv << std::endl;
+#endif
     #ifdef _DEBUG_H_
     std::fstream f("./logs/move.log", std::ios::app);
     f << "-- " << "size:" << route1_size << ", " << route2_size
@@ -523,11 +568,14 @@ InterSwapNeighborhoodExplorer::DeltaViolations(const RoutePlan &rp,
     #ifdef _NE_DEBUG_H_
     int cap_delta = DeltaCapExceededCost(rp, mv, 1);
     int late_delta = DeltaLateReturnCost(rp, mv, 1);
-    std::cout << "delta violation:";
-    std::cout << cap_delta << ", " << late_delta << std::endl;
+    std::cout << "---" << std::endl;
+    std::cout << rp.get_vio() << std::endl;
+    std::cout << rp << std::endl;
+    std::cout << mv << std::endl;
+    std::cout << "cap: " << cap_delta << ", " << "late: " << late_delta << std::endl;
     return cap_delta + late_delta;
     #else
-    return DeltaCapExceededCost(rp, mv, 1) + DeltaLateReturnCost(rp, mv, 1);
+    return DeltaCapExceededCost(rp, mv, 1) + DeltaLateReturnCost(rp, mv, 500);
     #endif
 }
 
@@ -655,6 +703,7 @@ InterSwapNeighborhoodExplorer::DeltaCapExceededCost(const RoutePlan &rp,
             delta += route_demand - demand_to + demand_from - vehicle_cap;
         }
     }
+    delta_cap = delta;
     return (weight * delta);
 }
 
@@ -734,6 +783,8 @@ void IntraSwapNeighborhoodExplorer::FirstMove(const RoutePlan &rp,
     mv.pos2 = 1;
     mv.ord1 = rp[mv.route][mv.pos1];
     mv.ord2 = rp[mv.route][mv.pos2];
+    if (!FeasibleMove(rp, mv))
+        NextMove(rp, mv);
 }
 
 bool IntraSwapNeighborhoodExplorer::NextMove(const RoutePlan &rp,
@@ -818,7 +869,7 @@ IntraSwapNeighborhoodExplorer::DeltaViolations(const RoutePlan &rp,
     std::cout << "Delta vio: " << cap_cost << ", " << late_cost << std::endl;
     return cap_cost + late_cost;
     #else
-    return DeltaCapExceededCost(rp, mv, w) + DeltaLateReturnCost(rp, mv, w);
+    return DeltaCapExceededCost(rp, mv, w) + DeltaLateReturnCost(rp, mv, 500);
     #endif
 }
 

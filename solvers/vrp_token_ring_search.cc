@@ -7,38 +7,41 @@
 TokenRingSearch::TokenRingSearch(const ProbInput &in,
                                  VRPStateManager &e_sm,
                                  VRPOutputManager &e_om,
-                                 std::string name):
+                                 std::string name,
+                                 std::string s):
     AbstractLocalSearch<ProbInput, ProbOutput, RoutePlan>(in, e_sm,
                                                           e_om, name),
     current_runner_(0), round_(0), idle_rounds_(0),
-    max_rounds_(1), max_idle_rounds_(1),
+    max_rounds_(1), max_idle_rounds_(1), special(s),
     max_idle_trials_(0), num_trials_(0), idle_trials_(0),
     token_ring_arguments("tr_" + name, "tr_" + name, false),
     arg_max_rounds("max_rounds", "mr", false),
     arg_max_idle_rounds("max_idle_rounds", "mir", false),
     arg_max_idle_trials("max_idle_trials", "mit", false),
-    arg_timeout("timeout", "to", false, 0.0) {
-    token_ring_arguments.AddArgument(arg_max_rounds);
-    token_ring_arguments.AddArgument(arg_max_idle_rounds);
-    token_ring_arguments.AddArgument(arg_max_idle_trials);
-    token_ring_arguments.AddArgument(arg_timeout);
-}
+    arg_timeout("timeout", "to", false, 0.0),
+    observer(0) {
+        token_ring_arguments.AddArgument(arg_max_rounds);
+        token_ring_arguments.AddArgument(arg_max_idle_rounds);
+        token_ring_arguments.AddArgument(arg_max_idle_trials);
+        token_ring_arguments.AddArgument(arg_timeout);
+    }
 
 TokenRingSearch::TokenRingSearch(const ProbInput &in,
                                  VRPStateManager &e_sm,
                                  VRPOutputManager &e_om,
                                  std::string name,
+                                 std::string s,
                                  CLParser &cl):
     AbstractLocalSearch<ProbInput, ProbOutput, RoutePlan>(in, e_sm,
                                                           e_om, name),
     current_runner_(0), round_(0), idle_rounds_(0),
-    max_rounds_(1), max_idle_rounds_(1),
+    max_rounds_(1), max_idle_rounds_(1), special(s),
     max_idle_trials_(0), num_trials_(0), idle_trials_(0),
     token_ring_arguments("tr_" + name, "tr_" + name, false),
     arg_max_rounds("max_rounds", "mr", false),
     arg_max_idle_rounds("max_idle_rounds", "mir", false),
     arg_max_idle_trials("max_idle_trials", "mit", false),
-    arg_timeout("timeout", "to", false, 0.0) {
+    arg_timeout("timeout", "to", false, 0.0), observer(0) {
     token_ring_arguments.AddArgument(arg_max_rounds);
     token_ring_arguments.AddArgument(arg_max_idle_rounds);
     token_ring_arguments.AddArgument(arg_max_idle_trials);
@@ -69,13 +72,16 @@ void TokenRingSearch::MultiStartSolve(unsigned trials) {
     for (unsigned t = 0; t < trials; ++t) {
         ++num_trials_;
 		++idle_trials_;
-        if (observer != NULL) observer->NotifyRestart(*this, t);
+        // if (observer != NULL) observer->NotifyRestart(*this, t);
         this->Run();
+        std::string fname = special + ".out." + std::to_string(t+1);
+        std::ofstream fout(fname.c_str());
+        fout << this->best_state << std::endl;
         if (t == 0 || LessThan(this->best_state_cost, global_best_state_cost)) {
             global_best_state = this->best_state;
             global_best_state_cost = this->best_state_cost;
             if (LowerBoundReached(global_best_state_cost)) break;
-			if (t) idle_trials_ = 0;
+            if (t) idle_trials_ = 0;
         }
 #ifdef _VRP_HAVE_PTHREAD_
         if (this->timeout_set) {
@@ -85,10 +91,10 @@ void TokenRingSearch::MultiStartSolve(unsigned trials) {
             }
         }
 #endif
-        if (idle_trials_ >= max_idle_trials_) {
-            std::cout << "Idle trials exceeded." << std::endl;
-            break;
-        }
+        // if (idle_trials_ >= max_idle_trials_) {
+        //     std::cout << "Idle trials exceeded." << std::endl;
+        //     break;
+        // }
         if (timeout_expired) break;
     }
     this->best_state = global_best_state;
@@ -102,6 +108,7 @@ void TokenRingSearch::InitializeSearch() {
         throw std::logic_error("Max idle round should be greater than 0");
     if (!p_runners.size())
         throw std::logic_error("No runner in " + this->name);
+    // this->SetTimeout(500.0);
 }
 
 void TokenRingSearch::Run() {
@@ -126,12 +133,12 @@ void TokenRingSearch::Run() {
             //           << current_runner_  << std::endl;
             // fout << this->current_state << std::endl;
             p_r->SetState(this->current_state, this->current_state_cost);
-            if (observer != NULL) observer->NotifyRunnerStart(*this);
+            // if (observer != NULL) observer->NotifyRunnerStart(*this);
             // fout << "Timeout before: " << this->current_timeout;
             timeout_expired = this->LetGo(*p_r);
             // fout << "  after: " <<  this->current_timeout << std::endl;
             // fout << "--" << std::endl;
-            if (observer != NULL) observer->NotifyRunnerStop(*this);
+            // if (observer != NULL) observer->NotifyRunnerStop(*this);
             this->current_state = p_runners[current_runner_]->GetState();
             this->current_state_cost = p_r->GetStateCost();
             if (LessThan(this->current_state_cost, this->best_state_cost)) {
@@ -141,7 +148,7 @@ void TokenRingSearch::Run() {
                 lower_bound_reached = LowerBoundReached(this->best_state_cost);
             }
             current_runner_ = (current_runner_ + 1) % p_runners.size();
-            if (observer != NULL) observer->NotifyRound(*this);
+            // if (observer != NULL) observer->NotifyRound(*this);
             if (lower_bound_reached || timeout_expired) break;
         }
         std::cout << this->name << " #" << num_trials_ << " trials,"

@@ -24,11 +24,13 @@ public AbstractLocalSearch<ProbInput, ProbOutput, RoutePlan> {
     TokenRingSearch(const ProbInput &in,
                     VRPStateManager &e_sm,
                     VRPOutputManager &e_om,
-                    std::string name);
+                    std::string name,
+                    std::string s);
     TokenRingSearch(const ProbInput& in,
                     VRPStateManager &e_sm,
                     VRPOutputManager &e_om,
                     std::string name,
+                    std::string s,
                     CLParser &cl);
     virtual ~TokenRingSearch() { }
     void Solve();
@@ -54,6 +56,7 @@ public AbstractLocalSearch<ProbInput, ProbOutput, RoutePlan> {
     int round_;
     int idle_rounds_;
     int max_rounds_, max_idle_rounds_;
+    std::string special;
     int max_idle_trials_;
     int num_trials_;
     int idle_trials_;

@@ -46,9 +46,9 @@ class RoutePlan {
     friend std::ostream& operator<<(std::ostream&, const RoutePlan&);
 
  public:
-    RoutePlan(const ProbInput& pi): in(pi) { Allocate(); }
+    RoutePlan(const ProbInput& pi): in(pi), vios(0) { Allocate(); }
     RoutePlan(const RoutePlan &rp):
-        in(rp.in), routes_(rp.routes_), timetable_(rp.timetable_) { }
+        in(rp.in), routes_(rp.routes_), timetable_(rp.timetable_), vios(rp.vios) { }
     void AddOrder(int , unsigned, unsigned, bool);
     void AddRoute(const Route &r) { routes_.push_back(r); }
     // void ResizeTimetable(unsigned sz) { timetable.resize(sz); }
@@ -70,10 +70,13 @@ class RoutePlan {
     RoutePlan& operator=(const RoutePlan &rp) {
         routes_ = rp.routes_;
         timetable_ = rp.timetable_;
+        vios = rp.vios;
         return *this;
     }
     // check whether a route plan is feasible
     bool CheckFeasibility();
+    void set_vio(int v) const { vios = v; }
+    int get_vio() const { return vios; }
 
  private:
     void Allocate();
@@ -81,5 +84,6 @@ class RoutePlan {
     std::vector<Route> routes_;
     // std::vector<std::vector<int> > plan;
     std::vector<std::vector<int> > timetable_;
+    mutable int vios;
 };
 #endif

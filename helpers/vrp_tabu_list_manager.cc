@@ -2,25 +2,34 @@
 
 bool InsMoveTabuListManager::Inverse(const InsMove &mt,
                                      const InsMove &me) const {
-    // // PR6
-    // if (me.new_route == mt.old_route)
-    //     return true;
-    // PR5
-    if (me.old_route == mt.new_route)
-        return true;
-    // // PR4 -- involving the same order
-    // if (me.order == mt.order)
-    //     return true;
-    // // PR3
-    // if (me.order == mt.order && me.new_route == mt.old_route)
-    //     return true;
-    // // PR2
-    // if (me.new_route == mt.old_route && me.old_route == mt.new_route)
-    //     return true;
-    // // PR1
-    // if (me.order == mt.order && me.old_route == mt.new_route)
-    //     return true;
-    return false;
+    switch(index) {
+        case 6:
+            // PR6
+            if (me.new_route == mt.old_route)
+                return true;
+        case 5:
+            // PR5
+            if (me.old_route == mt.new_route)
+                return true;
+        case 4:
+            // PR4 -- involving the same order
+            if (me.order == mt.order)
+                return true;
+        case 3:
+            // PR3
+            if (me.order == mt.order && me.new_route == mt.old_route)
+                return true;
+        case 2:
+            // PR2
+            if (me.new_route == mt.old_route && me.old_route == mt.new_route)
+                return true;
+        case 1:
+            // PR1
+            if (me.order == mt.order && me.old_route == mt.new_route)
+                return true;
+        default:
+            return false;
+    }
 }
 
 bool InterSwapTabuListManager::Inverse(const InterSwap &mt,

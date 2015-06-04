@@ -36,11 +36,15 @@ std::istream& operator>>(std::istream &is, RoutePlan &rp) {
     is >> tmp;
     is.getline(buf, 256, ':');
     int num_order = atoi(buf);
+    std::vector<bool> og_table(rp.in.get_num_ogroup(), false);
     for (int i = 0; i < num_order; ++i) {
         std::string order_id;
         is >> order_id;
         int og_index = rp.in.IndexOrderGroup(order_id);
-        rp.AddOrder(og_index, -1, -1, true);
+        if (!og_table[og_index]) {
+            rp.AddOrder(og_index, -1, -1, true);
+            og_table[og_index] = true;
+        }
     }
     getline(is, tmp);
     return is;

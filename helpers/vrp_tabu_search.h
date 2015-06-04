@@ -79,10 +79,36 @@ public TabuSearch<ProbInput, RoutePlan, IntraSwap> {
 void InsMoveTabuSearch::StoreMove() {
     if (have_log) {
         log << "--" << std::endl;
-        this->pm.Print(log);    // for debug, print tabu list
+        log << this->current_state << std::endl
+            << this->current_move << std::endl
+            << this->current_move_cost << std::endl;
         log << "--" << std::endl;
     }
-    TabuSearch<ProbInput, RoutePlan, InsMove>::StoreMove();
+    if (this->observer != NULL)
+        this->observer->NotifyStoreMove(*this);
+    this->pm.InsertMove(this->current_state, this->current_move, this->current_move_cost,
+                        this->current_state_cost, this->best_state_cost);
+    bool cur_vio = this->current_state.get_vio() > 0 ? true : false;
+    bool best_vio = this->best_state.get_vio() > 0 ? true: false;
+    if (!(cur_vio ^ best_vio)) {
+        if (LessOrEqualThan(this->current_state_cost,this->best_state_cost)) {
+            // same cost states are accepted as best for diversification
+            if (LessThan(this->current_state_cost,this->best_state_cost)) {
+                if (this->observer != NULL)
+                    this->observer->NotifyNewBest(*this);
+                this->iteration_of_best = this->number_of_iterations;
+                this->best_state_cost = this->current_state_cost;
+            }
+            this->best_state = this->current_state;
+        }
+    } else if (!cur_vio && best_vio) {
+        if (this->observer != NULL)
+            this->observer->NotifyNewBest(*this);
+        this->iteration_of_best = this->number_of_iterations;
+        this->best_state_cost = this->current_state_cost;
+        this->best_state = this->current_state;
+    }
+    // TabuSearch<ProbInput, RoutePlan, InterSwap>::StoreMove();
 }
 
 void InterSwapTabuSearch::StoreMove() {
@@ -91,7 +117,31 @@ void InterSwapTabuSearch::StoreMove() {
 		this->pm.Print(log);    // for debug, print tabu list
 		log << "--" << std::endl;
 	}
-    TabuSearch<ProbInput, RoutePlan, InterSwap>::StoreMove();
+    if (this->observer != NULL)
+        this->observer->NotifyStoreMove(*this);
+    this->pm.InsertMove(this->current_state, this->current_move, this->current_move_cost,
+                        this->current_state_cost, this->best_state_cost);
+    bool cur_vio = this->current_state.get_vio() > 0 ? true : false;
+    bool best_vio = this->best_state.get_vio() > 0 ? true: false;
+    if (!(cur_vio ^ best_vio)) {
+        if (LessOrEqualThan(this->current_state_cost,this->best_state_cost)) {
+            // same cost states are accepted as best for diversification
+            if (LessThan(this->current_state_cost,this->best_state_cost)) {
+                if (this->observer != NULL)
+                    this->observer->NotifyNewBest(*this);
+                this->iteration_of_best = this->number_of_iterations;
+                this->best_state_cost = this->current_state_cost;
+            }
+            this->best_state = this->current_state;
+        }
+    } else if (!cur_vio && best_vio) {
+        if (this->observer != NULL)
+            this->observer->NotifyNewBest(*this);
+        this->iteration_of_best = this->number_of_iterations;
+        this->best_state_cost = this->current_state_cost;
+        this->best_state = this->current_state;
+    }
+    // TabuSearch<ProbInput, RoutePlan, InterSwap>::StoreMove();
 }
 
 void IntraSwapTabuSearch::StoreMove() {
@@ -100,7 +150,31 @@ void IntraSwapTabuSearch::StoreMove() {
 		this->pm.Print(log);    // for debug, print tabu list
 		log << "--" << std::endl;
 	}
-    TabuSearch<ProbInput, RoutePlan, IntraSwap>::StoreMove();
+    if (this->observer != NULL)
+        this->observer->NotifyStoreMove(*this);
+    this->pm.InsertMove(this->current_state, this->current_move, this->current_move_cost,
+                        this->current_state_cost, this->best_state_cost);
+    bool cur_vio = this->current_state.get_vio() > 0 ? true : false;
+    bool best_vio = this->best_state.get_vio() > 0 ? true: false;
+    if (!(cur_vio ^ best_vio)) {
+        if (LessOrEqualThan(this->current_state_cost,this->best_state_cost)) {
+            // same cost states are accepted as best for diversification
+            if (LessThan(this->current_state_cost,this->best_state_cost)) {
+                if (this->observer != NULL)
+                    this->observer->NotifyNewBest(*this);
+                this->iteration_of_best = this->number_of_iterations;
+                this->best_state_cost = this->current_state_cost;
+            }
+            this->best_state = this->current_state;
+        }
+    } else if (!cur_vio && best_vio) {
+        if (this->observer != NULL)
+            this->observer->NotifyNewBest(*this);
+        this->iteration_of_best = this->number_of_iterations;
+        this->best_state_cost = this->current_state_cost;
+        this->best_state = this->current_state;
+    }
+    // TabuSearch<ProbInput, RoutePlan, InterSwap>::StoreMove();
 }
 
 #endif

@@ -12,6 +12,7 @@
 #include "helpers/vrp_state_manager.h"
 
 // #define _NE_DEBUG_H_
+// #define _VNE_DEBUG_H_
 // #define _DEBUG_H_
 
 template <class Move>
@@ -248,45 +249,60 @@ int TabuNeighborhoodExplorer<Move>::BestMove(const RoutePlan &st, Move &mv,
     int mv_cost = DeltaCostFunction(st,mv);
     Move best_move = mv;
     int best_delta = mv_cost;
+    int best_vio = get_delta_cap() + get_delta_late_return();
     bool all_moves_prohibited = pm.ProhibitedMove(st, mv, mv_cost);
 
     static unsigned int i1 = 0, i2 = 0;
 
     while (NextMove(st, mv) && !this->ExternalTerminationRequest()) {
         mv_cost = DeltaCostFunction(st, mv);
+        int mv_vio = get_delta_cap() + get_delta_late_return();
+        if (get_delta_cap() > 0) {
+            std::ofstream out_f("./logs/best.move", std::ios::app);
+            out_f << "---" << std::endl  << st << std::endl << mv << std::endl;
+        }
         if (get_delta_late_return() > 0)
             continue;
         if (LessThan(mv_cost, best_delta)) {
             if (!pm.ProhibitedMove(st, mv, mv_cost)) {
                 best_move = mv;
                 best_delta = mv_cost;
+                best_vio = mv_vio;
                 number_of_bests = 1;
                 all_moves_prohibited = false;
             } else if (all_moves_prohibited) {
                 best_move = mv;
                 best_delta = mv_cost;
+                best_vio = mv_vio;
                 number_of_bests = 1;
             }
         } else if (EqualTo(mv_cost, best_delta)) {
             if (!pm.ProhibitedMove(st, mv, mv_cost)) {
                 if (all_moves_prohibited) {
                     best_move = mv;
+                    best_vio = mv_vio;
                     number_of_bests = 1;
                     all_moves_prohibited = false;
                 } else {
                     // accept the move with probability 1 / (1 + number_of_bests)
-                    if (Random::Int(0,number_of_bests) == 0)
+                    if (Random::Int(0,number_of_bests) == 0) {
                         best_move = mv;
+                        best_vio = mv_vio;
+                    }
                     number_of_bests++;
                 }
             } else if (all_moves_prohibited) {
-                if (Random::Int(0,number_of_bests) == 0) // accept the move with probability 1 / (1 + number_of_bests)
+                if (Random::Int(0,number_of_bests) == 0) {
+                    // accept the move with probability 1 / (1 + number_of_bests)
                     best_move = mv;
+                    best_vio = mv_vio;
+                }
                 number_of_bests++;
             }
         } else if (all_moves_prohibited && !pm.ProhibitedMove(st, mv, mv_cost)) {
             best_move = mv;
             best_delta = mv_cost;
+            best_vio = mv_vio;
             number_of_bests = 1;
             all_moves_prohibited = false;
         }
@@ -297,6 +313,7 @@ int TabuNeighborhoodExplorer<Move>::BestMove(const RoutePlan &st, Move &mv,
     i2++;
     //std::cerr << (float)i1/i2 << ' ' << best_move << " ";
     mv = best_move;
+    st.set_vio(st.get_vio() + best_vio);
     return best_delta;
 }
 
