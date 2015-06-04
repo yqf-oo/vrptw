@@ -12,6 +12,7 @@
 
 void VRPStateManager::RandomState(RoutePlan &rp) {
 	ResetState(rp);
+    // std::ofstream out_f("./logs/first.log", std::ios::app);
 	for (int i = 0; i < in.get_num_ogroup(); ++i) {
 		const OrderGroup &o = in.OrderGroupVect(i);
 		std::pair<int, int> date_window = o.get_dw();
@@ -26,7 +27,13 @@ void VRPStateManager::RandomState(RoutePlan &rp) {
                 int cap = in.VehicleVect(k).get_cap();
                 int route_index = day * in.get_num_vehicle() + k;
                 int delta = cap - rp[route_index].demand() - o.get_demand();
-                if (delta) {
+                // if (delta <= 0) {
+                //     out_f << "og #" << i <<": " << o << std::endl;
+                //     out_f << "route #" << route_index << ", veh: #" << k
+                //           << ", cap: " << cap << ", delta: " << delta << std::endl;
+                //     out_f << "----" << std::endl;
+                // }
+                if (delta > 0) {
                     rvec.push_back(k);
                     qvec.push_back(delta);
                 }
@@ -43,6 +50,7 @@ void VRPStateManager::RandomState(RoutePlan &rp) {
             int idx = Random::Int(0, rvec.size() - 1);
             rp.AddOrder(i, day, rvec[idx], false);
         } else {
+            assert(!o.IsMandatory());
             rp.AddOrder(i, day, 0, true);
         }
     }
