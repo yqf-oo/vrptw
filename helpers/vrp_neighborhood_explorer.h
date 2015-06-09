@@ -32,20 +32,21 @@ class TabuNeighborhoodExplorer:
 			int get_delta_late_return() const { return delta_num_order_late_return; }
 		protected:
 			TabuNeighborhoodExplorer(const ProbInput &in,
-					VRPStateManager &sm, std::string nm):
-				NeighborhoodExplorer<ProbInput, RoutePlan, Move>(in, sm, nm) { }
+					VRPStateManager &sm, std::string nm, int w):
+				NeighborhoodExplorer<ProbInput, RoutePlan, Move>(in, sm, nm), vio_wt(w) { }
 			void UpdateRouteTimetable(std::vector<int>&, const Route&) const;
 			int RouteCostsOnTimeWindow(const Route&, const std::vector<int>&, int*) const;
 			mutable std::vector<Route> routes_;
 			mutable std::vector<std::vector<int> > timetable_;
 			mutable int delta_num_order_late_return;
 			mutable int delta_cap;
+            int vio_wt;
 	};
 
 class InsMoveNeighborhoodExplorer: public TabuNeighborhoodExplorer<InsMove> {
 	public:
-		InsMoveNeighborhoodExplorer(const ProbInput &in, VRPStateManager &sm):
-			TabuNeighborhoodExplorer<InsMove>(in, sm, "InsMoveNeighborhood") { }
+		InsMoveNeighborhoodExplorer(const ProbInput &in, VRPStateManager &sm, int w):
+			TabuNeighborhoodExplorer<InsMove>(in, sm, "InsMoveNeighborhood", w) { }
 
 		// move generation
 		void RandomMove(const RoutePlan&, InsMove&) const;
@@ -80,8 +81,8 @@ class InsMoveNeighborhoodExplorer: public TabuNeighborhoodExplorer<InsMove> {
 class InterSwapNeighborhoodExplorer:
 	public TabuNeighborhoodExplorer<InterSwap> {
 		public:
-			InterSwapNeighborhoodExplorer(const ProbInput &in, VRPStateManager &sm):
-				TabuNeighborhoodExplorer<InterSwap>(in, sm, "InterSwapNeighborhood") { }
+			InterSwapNeighborhoodExplorer(const ProbInput &in, VRPStateManager &sm, int w):
+				TabuNeighborhoodExplorer<InterSwap>(in, sm, "InterSwapNeighborhood", w) { }
 
 			// move generation
 			void RandomMove(const RoutePlan&, InterSwap&) const;
@@ -115,8 +116,8 @@ class InterSwapNeighborhoodExplorer:
 class IntraSwapNeighborhoodExplorer:
 	public TabuNeighborhoodExplorer<IntraSwap> {
 		public:
-			IntraSwapNeighborhoodExplorer(const ProbInput &in, VRPStateManager &sm):
-				TabuNeighborhoodExplorer<IntraSwap>(in, sm, "IntraSwapNeighborhood") { }
+			IntraSwapNeighborhoodExplorer(const ProbInput &in, VRPStateManager &sm, int w):
+				TabuNeighborhoodExplorer<IntraSwap>(in, sm, "IntraSwapNeighborhood", w) { }
 
 			// move generation
 			void RandomMove(const RoutePlan&, IntraSwap&) const;
@@ -251,6 +252,7 @@ int TabuNeighborhoodExplorer<Move>::BestMove(const RoutePlan &st, Move &mv,
     int best_delta = mv_cost;
     int best_vio = get_delta_cap() + get_delta_late_return();
     bool all_moves_prohibited = pm.ProhibitedMove(st, mv, mv_cost);
+    bool all_moves_violated = best_vio > 0 ? true : false;
 
     static unsigned int i1 = 0, i2 = 0;
 
@@ -261,8 +263,24 @@ int TabuNeighborhoodExplorer<Move>::BestMove(const RoutePlan &st, Move &mv,
             std::ofstream out_f("./logs/best.move", std::ios::app);
             out_f << "---" << std::endl  << st << std::endl << mv << std::endl;
         }
-        if (get_delta_late_return() > 0)
+        bool is_violated = get_delta_late_return() > 0 ? true : false;
+        if (is_violated) {
+            if (all_moves_violated && mv_vio < best_vio) {
+                best_move = mv;
+                best_delta = mv_cost;
+                best_vio = mv_vio;
+            }
             continue;
+        } else {
+            if (all_moves_violated) {
+                best_move = mv;
+                best_delta = mv_cost;
+                best_vio = mv_vio;
+            }
+            all_moves_violated = false;
+        }
+        //if (get_delta_late_return() > 0)
+        //    continue;
         if (LessThan(mv_cost, best_delta)) {
             if (!pm.ProhibitedMove(st, mv, mv_cost)) {
                 best_move = mv;

@@ -12,9 +12,9 @@
 
 class VRPStateManager: public StateManager<ProbInput, RoutePlan> {
  public:
-    explicit VRPStateManager(const ProbInput &pi):
+    explicit VRPStateManager(const ProbInput &pi, int w):
         StateManager<ProbInput, RoutePlan>(pi, "VRPStateManager"),
-        num_order_late_return(0), cap_vio_cost(0) { }
+        num_order_late_return(0), cap_vio_cost(0), vio_wt(w) { }
     ~VRPStateManager() { }
     void UpdateTimeTable(RoutePlan&);
     void RandomState(RoutePlan&);
@@ -37,6 +37,7 @@ class VRPStateManager: public StateManager<ProbInput, RoutePlan> {
     int ComputeLateReturnCost(const RoutePlan&, int) const;       // h2
     mutable int num_order_late_return;
     mutable int cap_vio_cost;
+    int vio_wt;
 };
 
 #endif

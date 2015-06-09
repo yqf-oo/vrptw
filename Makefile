@@ -2,7 +2,7 @@ DDATA		= ./data
 DHELPERS	= ./helpers
 DSOLVERS    = ./solvers
 LINKOPTS 	= -L../lib -lEasyLocalpp -lstdc++ -I../easylocal-2/src
-CXXFLAGS	= -O0 -Wall
+CXXFLAGS	= -O2 -Wall
 CXXFLAGS	+= -g3 -std=c++11 -ggdb
 CXX			= g++
 _HOBJ		= vrp_state_manager.o vrp_neighborhood_explorer.o \
@@ -69,4 +69,4 @@ $(DSOLVERS)/%.o: $(DSOLVERS)/%.cc
 
 .PHONY: clean
 clean:
-	@rm -f $(DDATA)/*.o $(DHELPERS)/*.o solvers/*.o main.o vrptw
+	@rm -f $(DDATA)/*.o $(DHELPERS)/*.o solvers/*.o main.o

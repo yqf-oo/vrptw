@@ -12,7 +12,45 @@
 
 void VRPStateManager::RandomState(RoutePlan &rp) {
 	ResetState(rp);
-    // std::ofstream out_f("./logs/first.log", std::ios::app);
+    // bool man_first = true;
+    // int i = 0, num_og_visited = 0, num_og = in.get_num_ogroup();
+    // std::vector<bool> og_table(num_og, false);
+    // while(num_og_visited < num_og) {
+    //     if (i == num_og)
+    //         man_first = false;
+    //     i %= num_og;
+	// 	const OrderGroup &o = in.OrderGroupVect(i);
+    //     if ((man_first && !o.IsMandatory()) || og_table[i]) {
+    //         ++i;
+    //         continue;
+    //     }
+    //     og_table[i] = true;
+    //     num_og_visited++;
+	// 	std::pair<int, int> date_window = o.get_dw();
+	// 	assert(date_window.first >= 1);
+	// 	int day = Random::Int(date_window.first - 1, date_window.second - 1);
+	// 	assert(o.IsDayFeasible(day));
+
+	// 	std::vector<int> rvec(0);
+    //     for (int k = 0; k < in.get_num_vehicle(); ++k) {
+    //         if (in.IsReachable(k, i)) {
+    //             int cap = in.VehicleVect(k).get_cap();
+    //             int route_index = day * in.get_num_vehicle() + k;
+    //             int delta = cap - rp[route_index].demand() - o.get_demand();
+    //             if (delta > 0)
+    //                 rvec.push_back(k);
+    //         }
+    //     }
+    //     if (rvec.size()) {
+    //         int idx = Random::Int(0, rvec.size() - 1);
+    //         rp.AddOrder(i, day, rvec[idx], false);
+    //     } else {
+    //         assert(!o.IsMandatory());
+    //         rp.AddOrder(i, day, 0, true);
+    //     }
+    //     ++i;
+    // }
+
 	for (int i = 0; i < in.get_num_ogroup(); ++i) {
 		const OrderGroup &o = in.OrderGroupVect(i);
 		std::pair<int, int> date_window = o.get_dw();
@@ -40,14 +78,14 @@ void VRPStateManager::RandomState(RoutePlan &rp) {
             }
         }
         if (rvec.size()) {
-            // int max = 0, idx = 0;
-            // for (unsigned k = 0; k < rvec.size(); ++k) {
-            //     if (qvec[k] > max) {
-            //         max = qvec[k];
-            //         idx = k;
-            //     }
-            // }
-            int idx = Random::Int(0, rvec.size() - 1);
+            int max = 0, idx = 0;
+            for (unsigned k = 0; k < rvec.size(); ++k) {
+                if (qvec[k] > max) {
+                    max = qvec[k];
+                    idx = k;
+                }
+            }
+            // int idx = Random::Int(0, rvec.size() - 1);
             rp.AddOrder(i, day, rvec[idx], false);
         } else {
             assert(!o.IsMandatory());
@@ -110,7 +148,7 @@ int VRPStateManager::CostFunction(const RoutePlan &rp) const {
 	num_order_late_return = 0;
     int obj = Objective(rp);
     int vio = Violations(rp);
-    int cap_vio = vio - 500 * num_order_late_return;
+    int cap_vio = vio - vio_wt * num_order_late_return;
     rp.set_vio(cap_vio + num_order_late_return);
     return (obj + vio);
 	// return (Objective(rp) + Violations(rp));
@@ -143,7 +181,7 @@ int VRPStateManager::Violations(const RoutePlan &rp) const {
 		<< late_cost << std::endl;
 	return cap_cost + late_cost;
 #else
-	return ComputeCapExceededCost(rp, 1) + ComputeLateReturnCost(rp, 500);
+	return ComputeCapExceededCost(rp, 1) + ComputeLateReturnCost(rp, vio_wt);
 #endif
 }
 

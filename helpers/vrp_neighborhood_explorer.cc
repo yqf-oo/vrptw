@@ -185,7 +185,7 @@ InsMoveNeighborhoodExplorer::DeltaViolations(const RoutePlan &rp,
     }
     return cap_delta + late_delta;
     #else
-    return DeltaCapExceededCost(rp, mv, 1) + DeltaLateReturnCost(rp, mv, 500);
+    return DeltaCapExceededCost(rp, mv, 1) + DeltaLateReturnCost(rp, mv, this->vio_wt);
     #endif
 }
 
@@ -575,7 +575,7 @@ InterSwapNeighborhoodExplorer::DeltaViolations(const RoutePlan &rp,
     std::cout << "cap: " << cap_delta << ", " << "late: " << late_delta << std::endl;
     return cap_delta + late_delta;
     #else
-    return DeltaCapExceededCost(rp, mv, 1) + DeltaLateReturnCost(rp, mv, 500);
+    return DeltaCapExceededCost(rp, mv, 1) + DeltaLateReturnCost(rp, mv, this->vio_wt);
     #endif
 }
 
@@ -869,7 +869,7 @@ IntraSwapNeighborhoodExplorer::DeltaViolations(const RoutePlan &rp,
     std::cout << "Delta vio: " << cap_cost << ", " << late_cost << std::endl;
     return cap_cost + late_cost;
     #else
-    return DeltaCapExceededCost(rp, mv, w) + DeltaLateReturnCost(rp, mv, 500);
+    return DeltaCapExceededCost(rp, mv, w) + DeltaLateReturnCost(rp, mv, this->vio_wt);
     #endif
 }
 

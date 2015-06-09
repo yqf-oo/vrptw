@@ -26,8 +26,12 @@ int main(int argc, char *argv[]) {
     CLParser cl(argc, argv);
     ValArgument<std::string> arg_input_file("file", "f", true, cl);
     ValArgument<int> arg_index("index", "i", true, cl);
+    ValArgument<int> arg_cycle("cycle", "c", true, cl);
+    ValArgument<int> arg_weight("weight", "w", true, cl);
     cl.MatchArgument(arg_input_file);
     cl.MatchArgument(arg_index);
+    cl.MatchArgument(arg_cycle);
+    cl.MatchArgument(arg_weight);
 
     std::string test_dir = "./test-cases/";
     std::string test_file = test_dir + arg_input_file.GetValue() + ".vrp";
@@ -40,10 +44,11 @@ int main(int argc, char *argv[]) {
     ProbInput in(f);
 
     // helpers
-    VRPStateManager vrp_sm(in);
-    InsMoveNeighborhoodExplorer ins_ne(in, vrp_sm);
-    InterSwapNeighborhoodExplorer intersw_ne(in, vrp_sm);
-    IntraSwapNeighborhoodExplorer intrasw_ne(in, vrp_sm);
+    int weight = arg_weight.GetValue();
+    VRPStateManager vrp_sm(in, weight);
+    InsMoveNeighborhoodExplorer ins_ne(in, vrp_sm, weight);
+    InterSwapNeighborhoodExplorer intersw_ne(in, vrp_sm, weight);
+    IntraSwapNeighborhoodExplorer intrasw_ne(in, vrp_sm, weight);
     InsMoveTabuListManager ins_tlm(4);
     InterSwapTabuListManager intersw_tlm;
     IntraSwapTabuListManager intrasw_tlm;
@@ -102,9 +107,10 @@ int main(int argc, char *argv[]) {
     token_ring_solver.AddRunner(ts_ins);
     token_ring_solver.AddRunner(ts_intersw);
     token_ring_solver.AddRunner(ts_intrasw);
+    int cycle = arg_cycle.GetValue();
     int index = arg_index.GetValue();
     Random::Seed((unsigned long)(time(NULL) % RANDOM_MAX + index));
-    for (int i = 0; i < 20; ++i) {
+    for (int i = 0; i < cycle; ++i) {
         token_ring_solver.Solve();
         std::ostringstream os_file;
         os_file << "./300/" << arg_input_file.GetValue()
